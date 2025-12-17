@@ -1,24 +1,52 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { Stack } from "expo-router";
+import "../polyfills";
+import "./globals.css";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Stack>
+      {/* <Stack screenOptions={{headerShown: false}}/> */}
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="continue"
+        options={{
+          headerShown: false,
+          animation: "fade",
+        }}
+      />
+      <Stack.Screen
+        name="createwallet"
+        options={{
+          headerShown: false,
+          presentation: "modal",
+          animation: "slide_from_bottom",
+        }}
+      />
+      <Stack.Screen name="importwallet" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="importkey"
+        options={{
+          headerShown: false,
+          animation: "slide_from_bottom",
+          animationDuration: 300,
+        }}
+      />
+      <Stack.Screen
+        name="importphrase"
+        options={{
+          headerShown: false,
+
+          animation: "slide_from_bottom",
+          animationDuration: 300,
+        }}
+      />
+      <Stack.Screen
+        name="dashboard"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+    </Stack>
   );
 }
