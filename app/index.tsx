@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import {
   Dimensions,
   ImageBackground,
+  Pressable,
   StatusBar,
   StyleSheet,
   Text,
@@ -160,23 +161,25 @@ export default function Index() {
         {/* Action Buttons */}
         <View style={styles.buttonContainer}>
           <Link href="/continue" asChild>
-            <AnimatedTouchableOpacity
-              entering={FadeInDown.duration(600).delay(500).springify()}
-              activeOpacity={0.8}
-              style={[styles.button, styles.primaryButton]}
-            >
-              <Text style={styles.primaryButtonText}>Create Wallet</Text>
-            </AnimatedTouchableOpacity>
+            <Pressable>
+              <Animated.View 
+                entering={FadeInDown.duration(600).delay(500).springify()}
+                style={[styles.button, styles.primaryButton]}
+              > 
+                <Text style={styles.primaryButtonText}>Create Wallet</Text>
+              </Animated.View>
+            </Pressable>
           </Link>
 
           <Link href="/importwallet" asChild>
-            <AnimatedTouchableOpacity
-              entering={FadeInDown.duration(600).delay(650).springify()}
-              activeOpacity={0.8}
-              style={[styles.button, styles.secondaryButton]}
-            >
-              <Text style={styles.secondaryButtonText}>Import Wallet</Text>
-            </AnimatedTouchableOpacity>
+            <Pressable>
+              <Animated.View 
+                entering={FadeInDown.duration(600).delay(650).springify()}
+                style={[styles.button, styles.secondaryButton]}
+              > 
+                <Text style={styles.secondaryButtonText}>Import Wallet</Text>
+              </Animated.View>
+            </Pressable>
           </Link>
         </View>
       </SafeAreaView>

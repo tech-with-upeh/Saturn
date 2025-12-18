@@ -14,11 +14,54 @@ export default function RootLayout() {
           animation: "fade",
         }}
       />
+      <Stack.Screen 
+        name="receive"
+        options={{
+          headerShown:false,
+          animation: "fade"
+        }}
+      />
+      <Stack.Screen 
+        name="buypage"
+        options={{
+          headerShown:false,
+          animation: "slide_from_right"
+        }}
+      />
+      <Stack.Screen 
+        name="coinpage"
+        options={{
+          headerShown:false,
+          animation: "slide_from_right"
+        }}
+      />
+      <Stack.Screen 
+        name="swappage"
+        options={{
+          headerShown:false,
+          animation: "slide_from_right"
+        }}
+      />
+       <Stack.Screen
+        name="profile"
+        options={{
+          headerShown: false,
+          animation: "fade",
+        }}
+      />
       <Stack.Screen
         name="createwallet"
         options={{
           headerShown: false,
           presentation: "modal",
+          animation: "fade",
+        }}
+      />
+      <Stack.Screen
+        name="qrscanner"
+        options={{
+          headerShown: false,
+          presentation: "fullScreenModal",
           animation: "slide_from_bottom",
         }}
       />

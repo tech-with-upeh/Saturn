@@ -1,14 +1,6 @@
-// {
-//     name: "Solana",
-//     balance: 100,
-//     usdValue: 1233,
-//     growth: 12,
-//     chainId: "solana",
-//   },
-
 import { COIN_ICONS } from "@/constants/appconstants";
 import { useThemeColors } from "@/constants/theme";
-import { Image, Text, View } from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 
 interface MemeCardProps {
   name: string;
@@ -28,94 +20,112 @@ const CoinTile: React.FC<MemeCardProps> = ({
   onPress,
 }) => {
   const theme = useThemeColors();
+  const isPositive = parseFloat(growth) >= 0;
 
   return (
-    <View
-      className="flex-row justify-between items-center p-3"
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
       style={{
-        height: 72,
+        height: 80, // Slightly taller for better breathing room
         width: "100%",
         backgroundColor: theme.card,
-        borderRadius: 20,
-        shadowColor: theme.text,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+        borderRadius: 24, // Smoother rounded corners
+        paddingHorizontal: 16,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        // Premium Shadow
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 12,
+        elevation: 3,
+        marginBottom: 12,
       }}
     >
-      <View className="flex-row justify-center items-center gap-4">
+      {/* LEFT SECTION: Icon & Name */}
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
         <View
           style={{
-            width: 44,
-            height: 44,
-            borderRadius: 22,
+            width: 48,
+            height: 48,
+            borderRadius: 16, // Squircle-ish look for a modern feel
             backgroundColor: theme.background,
             justifyContent: "center",
             alignItems: "center",
+            borderWidth: 1,
+            borderColor: "rgba(0,0,0,0.02)", // Subtle border for definition
           }}
         >
           <Image
-            source={
-              chainId in COIN_ICONS ? COIN_ICONS[chainId] : { uri: chainId }
-            }
-            style={{
-              width: 28,
-              height: 28,
-            }}
+            source={chainId in COIN_ICONS ? COIN_ICONS[chainId] : { uri: chainId }}
+            style={{ width: 30, height: 30 }}
             resizeMode="contain"
           />
         </View>
-        <View className="justify-center items-start">
+
+        <View>
           <Text
-            className="font-bold text-base"
             style={{
+              fontSize: 16,
+              fontWeight: "700",
               color: theme.text,
-              marginBottom: 2,
+              letterSpacing: -0.3,
             }}
           >
             {name}
           </Text>
           <Text
-            className="text-xs font-medium"
             style={{
+              fontSize: 13,
+              fontWeight: "500",
               color: theme.txtsec,
+              marginTop: 2,
             }}
           >
-            {balance} {chainId.toUpperCase()}
+            {balance} <Text style={{ fontSize: 11, opacity: 0.7 }}>{chainId.toUpperCase()}</Text>
           </Text>
         </View>
       </View>
-      <View
-        className="justify-center items-end text-right"
-        style={{
-          height: "100%",
-        }}
-      >
+
+      {/* RIGHT SECTION: Value & Growth */}
+      <View style={{ alignItems: "end" }}>
         <Text
-          className="font-bold text-base"
           style={{
-            textAlign: "right",
+            fontSize: 17,
+            fontWeight: "700",
             color: theme.text,
-            marginBottom: 2,
+            textAlign: "right",
+            letterSpacing: -0.5,
           }}
         >
           ${usd}
         </Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+        
+        {/* Growth Pill */}
+        <View
+          style={{
+            backgroundColor: isPositive ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
+            paddingHorizontal: 8,
+            paddingVertical: 2,
+            borderRadius: 8,
+            marginTop: 4,
+            alignSelf: 'flex-end'
+          }}
+        >
           <Text
-            className="text-xs font-bold"
             style={{
-              textAlign: "right",
-              color: parseFloat(growth) >= 0 ? "#10B981" : "#EF4444",
+              fontSize: 12,
+              fontWeight: "700",
+              color: isPositive ? "#10B981" : "#EF4444",
             }}
           >
-            {parseFloat(growth) >= 0 ? "+" : ""}
-            {growth}%
+            {isPositive ? "+" : ""}{growth}%
           </Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

@@ -11,7 +11,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -77,7 +77,7 @@ const Continue = () => {
               style={styles.title}
             >
               Secure Your{"\n"}
-              <Text style={styles.titleAccent}>KudiX Assets</Text>
+              <Text style={styles.titleAccent}>Saturn Assets</Text>
             </Animated.Text>
             
             <Animated.Text
@@ -95,17 +95,16 @@ const Continue = () => {
             entering={FadeInUp.duration(600).delay(400).springify()}
             style={styles.termsText}
           >
-            By continuing, you agree to KudiX’s Terms & Conditions.
+            By continuing, you agree to Saturn’s Terms & Conditions.
           </Animated.Text>
 
           <Link href={"/createwallet"} asChild>
             <AnimatedTouchableOpacity
-              entering={FadeInUp.duration(600).delay(500).springify()}
-              activeOpacity={0.8}
-              style={[styles.button, styles.primaryButton]}
-            >
-              <Text style={styles.primaryButtonText}>Create Wallet</Text>
-            </AnimatedTouchableOpacity>
+                entering={FadeInUp.duration(600).delay(500).springify()}
+                style={[styles.button, styles.primaryButton]}
+              >
+                <Text style={styles.primaryButtonText}>Create Wallet</Text>
+             </AnimatedTouchableOpacity>
           </Link>
         </View>
       </SafeAreaView>
@@ -196,12 +195,13 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     textAlign: 'center',
   },
-  button: {
+button: {
     width: '100%',
     height: 56,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20
   },
   primaryButton: {
     backgroundColor: '#ac71ff',

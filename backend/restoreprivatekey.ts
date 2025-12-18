@@ -39,7 +39,7 @@ export function restoreFromPrivateKeys(keys: {
       } else {
         throw new Error("Invalid BTC key format");
       }
-
+ 
       const { address } = bitcoin.payments.p2wpkh({
         pubkey: keyPair.publicKey,
         network: bitcoin.networks.bitcoin,

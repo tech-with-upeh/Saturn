@@ -1,16 +1,22 @@
 import done from "@/assets/lotties/complete.json";
 import lott from "@/assets/lotties/load.json";
+import { generatefromMnemonics } from "@/backend/walletgen";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import LottieView from "lottie-react-native";
+import { ShieldCheck, UserCircle } from "phosphor-react-native";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ImageBackground,
+  Keyboard,
+  KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -18,274 +24,195 @@ import Animated, { FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated"
 import { SafeAreaView } from "react-native-safe-area-context";
 import Logo from "../assets/images/bg.png";
 
-const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
-
-const CreateWallet = () => {
-  const isIOS = Platform.OS === "ios";
+const CreateWallet = async () => {
   const router = useRouter();
   const [walletCreated, setWalletCreated] = useState(false);
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setWalletCreated(true);
-    }, 4000);
-
-    return () => clearTimeout(timer);
+    (async () => {
+      try {
+        
+        setTimeout(() => setWalletCreated(true), 1500);
+      } catch (error) {
+        console.log(error);
+      }
+    })();
   }, []);
+
+  const handleGoToDashboard = async () => {
+    const data = await generatefromMnemonics();
+
+    console.log("called");
+    console.log(data);
+
+    console.log("enddd");
+    // const userprofile : UserMeta = {
+    //   id: "user",
+    //   name: username,
+    //   networth: 0,
+    //   wallets: [
+    //     { id: "wallet1",
+    //   name: "Main Wallet",
+    //   totalBalance: 0,
+    //   coins: data.wallets.map((c: any, index) => ({
+    //     id: 0,
+    //     name: c.name,
+    //     balance: 0,
+    //     growthInPerc: 0,
+    //     growthInUsd: 0,
+    //     createdAt: 0,
+    //     chain: c.chain,
+    //     address: c.address
+    //   })),
+    //   createdAt: 0,
+    //   lastActiveAt: 0}
+    //   ]
+    // }
+    
+    Keyboard.dismiss(); // Closes keyboard immediately
+    router.replace("/dashboard"); // Use replace so they can't go back to setup
+  };
+
+  const isButtonDisabled = username.trim().length < 3;
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       
-      {/* Background */}
-      <ImageBackground
-        source={Logo}
-        resizeMode="cover"
-        style={StyleSheet.absoluteFill}
-      >
+      <ImageBackground source={Logo} resizeMode="cover" style={StyleSheet.absoluteFill}>
         <LinearGradient
           colors={['rgba(2, 1, 5, 0.3)', 'rgba(5, 2, 10, 0.8)', '#020105']}
-          locations={[0, 0.5, 1]}
           style={StyleSheet.absoluteFill}
         />
       </ImageBackground>
 
-      <SafeAreaView style={styles.contentContainer}>
-        <View style={styles.mainContent}>
-          {/* Lottie Animation Section */}
-          <Animated.View 
-            entering={ZoomIn.duration(600).springify()}
-            style={styles.lottieContainer}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"} 
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView style={{ flex: 1 }}>
+          <ScrollView 
+            contentContainerStyle={styles.scrollContent}
+            bounces={false}
+            keyboardShouldPersistTaps="handled"
           >
-            <LottieView
-              source={walletCreated ? done : lott}
-              style={styles.lottie}
-              autoPlay
-              loop={!walletCreated}
-            />
-            {/* Glow effect */}
-            <View style={[styles.glow, walletCreated && styles.glowSuccess]} />
-          </Animated.View>
+            {/* TOP CONTENT (Lottie & Text) */}
+            <View style={styles.mainContent}>
+              <Animated.View entering={ZoomIn.duration(600)} style={styles.lottieContainer}>
+                <LottieView
+                  source={walletCreated ? done : lott}
+                  style={styles.lottie}
+                  autoPlay
+                  loop={!walletCreated}
+                />
+                <View style={[styles.glow, walletCreated && styles.glowSuccess]} />
+              </Animated.View>
 
-          {/* Text Status Section */}
-          <View style={styles.textWrapper}>
-            <Animated.Text
-              key={walletCreated ? "title-done" : "title-loading"} // Force re-render animation
-              entering={FadeInUp.duration(500).springify()}
-              style={styles.title}
-            >
-              {walletCreated ? (
-                <>
-                  Wallet <Text style={styles.titleAccent}>Ready!</Text>
-                </>
-              ) : (
-                "Creating Wallet..."
+              <View style={styles.textWrapper}>
+                <Animated.Text entering={FadeInUp} style={styles.title}>
+                  {walletCreated ? "Wallet Ready!" : "Creating Wallet..."}
+                </Animated.Text>
+                <Text style={styles.subtitle}>
+                  {walletCreated 
+                    ? "Choose a username to represent you on the blockchain." 
+                    : "Generating secure keys..."}
+                </Text>
+              </View>
+
+              {/* USERNAME INPUT */}
+              {walletCreated && (
+                <Animated.View entering={FadeInDown} style={styles.inputWrapper}>
+                  <View style={styles.inputContainer}>
+                    <UserCircle color={username.length >= 3 ? "#ac71ff" : "#4b5563"} size={22} weight="bold" />
+                    <TextInput
+                      placeholder="Username"
+                      placeholderTextColor="#4b5563"
+                      style={styles.textInput}
+                      value={username}
+                      onChangeText={setUsername}
+                      autoCorrect={false}
+                    />
+                    {username.length >= 3 && <ShieldCheck color="#34d399" size={20} weight="fill" />}
+                  </View>
+                </Animated.View>
               )}
-            </Animated.Text>
-
-            <Animated.Text
-              key={walletCreated ? "sub-done" : "sub-loading"}
-              entering={FadeInUp.duration(500).delay(100).springify()}
-              style={styles.subtitle}
-            >
-              {walletCreated
-                ? "Your secure MultiCoin vault has been successfully initialized."
-                : "We are generating your cryptographic keys. Do not close this page."}
-            </Animated.Text>
-          </View>
-
-          {/* Warning Note (Only when created) */}
-          {walletCreated && (
-            <Animated.View 
-              entering={FadeInDown.duration(600).delay(200).springify()}
-              style={styles.warningContainer}
-            >
-              <Text style={styles.warningText}>
-                ⚠️ We do not store your keys. Make sure to back them up immediately!
-              </Text>
-            </Animated.View>
-          )}
-        </View>
-
-        {/* Action Button */}
-        <View style={styles.footer}>
-          {walletCreated ? (
-            <View style={styles.buttonGroup}>
-              <Link
-                href="/dashboard"
-                onPress={() => router.dismissAll()}
-                asChild
-              >
-                <AnimatedTouchableOpacity
-                  entering={FadeInUp.duration(600).springify()}
-                  activeOpacity={0.8}
-                  style={[styles.button, styles.primaryButton]}
-                >
-                  <Text style={styles.primaryButtonText}>Go to Dashboard</Text>
-                </AnimatedTouchableOpacity>
-              </Link>
-
-              <AnimatedTouchableOpacity
-                entering={FadeInUp.duration(600).delay(100).springify()}
-                activeOpacity={0.8}
-                style={[styles.button, styles.secondaryButton]}
-                onPress={() => {
-                  // TODO: Navigate to backup screen
-                  console.log("Navigate to backup");
-                }}
-              >
-                <Text style={styles.secondaryButtonText}>Back up now</Text>
-              </AnimatedTouchableOpacity>
             </View>
-          ) : (
-             <Animated.View 
-              entering={FadeInUp.duration(400)}
-              style={styles.loadingContainer}
-             >
-                <ActivityIndicator color="#ac71ff" size="large" />
-                <Text style={styles.loadingText}>Finalizing setup...</Text>
-             </Animated.View>
-          )}
-        </View>
-      </SafeAreaView>
+
+            {/* BUTTONS (Bottom part of ScrollView) */}
+            <View style={styles.footer}>
+              {walletCreated ? (
+                <View style={styles.buttonGroup}>
+                  <TouchableOpacity
+                    onPress={ await handleGoToDashboard}
+                    disabled={isButtonDisabled}
+                    activeOpacity={0.8}
+                    style={[
+                      styles.button, 
+                      styles.primaryButton,
+                      isButtonDisabled && { opacity: 0.4 }
+                    ]}
+                  >
+                    <Text style={styles.primaryButtonText}>Go to Dashboard</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={[styles.button, styles.secondaryButton]}>
+                    <Text style={styles.secondaryButtonText}>Back up keys</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator color="#ac71ff" />
+                  <Text style={styles.loadingText}>Finalizing...</Text>
+                </View>
+              )}
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#020105',
+  container: { flex: 1, backgroundColor: '#020105' },
+  scrollContent: { 
+    flexGrow: 1, 
+    justifyContent: 'space-between', 
+    paddingHorizontal: 24, 
+    paddingBottom: 40 
   },
-  contentContainer: {
-    flex: 1,
-    paddingHorizontal: 24,
-    justifyContent: 'space-between',
-    paddingBottom: 40,
-    paddingTop: 60,
-  },
-  mainContent: {
-    flex: 1,
+  mainContent: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 40 },
+  lottieContainer: { width: 200, height: 200, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  lottie: { width: 200, height: 200, zIndex: 10 },
+  glow: { position: 'absolute', width: 140, height: 140, backgroundColor: '#ac71ff', opacity: 0.1, borderRadius: 70, transform: [{ scale: 1.8 }] },
+  glowSuccess: { backgroundColor: '#34d399' },
+  textWrapper: { alignItems: 'center', marginBottom: 30 },
+  title: { fontSize: 28, fontWeight: '800', color: '#fff' },
+  subtitle: { fontSize: 15, color: '#9ca3af', textAlign: 'center', marginTop: 8 },
+  
+  inputWrapper: { width: '100%', marginBottom: 20 },
+  inputContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  lottieContainer: {
-    width: 280,
-    height: 280,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  lottie: {
-    width: 280,
-    height: 280,
-    zIndex: 10,
-  },
-  glow: {
-    position: 'absolute',
-    width: 220,
-    height: 220,
-    backgroundColor: '#ac71ff',
-    opacity: 0.1,
-    borderRadius: 110,
-    transform: [{ scale: 1.5 }],
-    zIndex: 0,
-  },
-  glowSuccess: {
-    backgroundColor: '#34d399', // Green glow for success
-    opacity: 0.15,
-  },
-  textWrapper: {
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 30,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#ffffff',
-    textAlign: 'center',
-    lineHeight: 40,
-  },
-  titleAccent: {
-    color: '#ac71ff',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#9ca3af',
-    textAlign: 'center',
-    maxWidth: '85%',
-    lineHeight: 24,
-  },
-  warningContainer: {
-    backgroundColor: 'rgba(255, 171, 0, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(172, 113, 255, 0.2)',
+    borderRadius: 18,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 171, 0, 0.2)',
-    marginTop: 10,
-    maxWidth: '90%',
+    height: 60,
   },
-  warningText: {
-    color: '#fbbf24',
-    fontSize: 13,
-    textAlign: 'center',
-    flexWrap: 'wrap',
-  },
-  footer: {
-    width: '100%',
-    alignItems: 'center',
-    minHeight: 80,
-    justifyContent: 'center',
-  },
-  buttonGroup: {
-    width: '100%',
-    gap: 16,
-  },
-  button: {
-    width: '100%',
-    height: 56,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  primaryButton: {
-    backgroundColor: '#ac71ff',
-    shadowColor: '#ac71ff',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  primaryButtonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  secondaryButton: {
-    backgroundColor: 'rgba(45, 9, 80, 0.6)',
-    borderWidth: 1,
-    borderColor: 'rgba(172, 113, 255, 0.3)',
-  },
-  secondaryButtonText: {
-    color: '#e9d5ff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  loadingContainer: {
-    gap: 10,
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: '#a5b4fc',
-    fontSize: 14,
-    fontWeight: '500',
-  },
+  textInput: { flex: 1, color: '#fff', fontSize: 16, marginLeft: 12 },
+
+  footer: { width: '100%', marginTop: 20 },
+  buttonGroup: { gap: 12 },
+  button: { width: '100%', height: 56, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  primaryButton: { backgroundColor: '#ac71ff' },
+  primaryButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  secondaryButton: { backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(172, 113, 255, 0.2)' },
+  secondaryButtonText: { color: '#e9d5ff', fontSize: 15 },
+  loadingContainer: { alignItems: 'center', gap: 10 },
+  loadingText: { color: '#a5b4fc', fontSize: 13 },
 });
 
 export default CreateWallet;

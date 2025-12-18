@@ -6,21 +6,20 @@ import { useIsDarkMode, useThemeColors } from "@/constants/theme";
 import { fetchMemeCoins } from "@/services/trendingCoinService";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
+import { Link, router } from "expo-router";
 import {
   ArrowDownIcon,
   BellSimpleRingingIcon,
-  CaretRightIcon,
   CheckCircleIcon,
   InfoIcon,
   PaperPlaneTiltIcon,
   PlusIcon,
   QrCodeIcon,
   ShoppingCartIcon,
-  TrendUpIcon,
-  WalletIcon,
+  SwapIcon,
   WarningCircleIcon
 } from "phosphor-react-native";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ScrollView,
   StatusBar,
@@ -28,8 +27,14 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import {
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TabBarContext } from "./_layout";
+
 
 const index = () => {
   const [coins, setCoins] = useState<any[]>([]);
@@ -40,7 +45,33 @@ const index = () => {
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [permission, requestPermission] = useCameraPermissions();
 
-  const { hideTabBar, showTabBar } = useContext(TabBarContext);
+  const [expanded, setExpanded] = useState(false);
+  const animation = useSharedValue(0);
+
+  const toggleStack = () => {
+    setExpanded(!expanded);
+    animation.value = withSpring(expanded ? 0 : 1, {
+      damping: 15,
+      stiffness: 90,
+    });
+  };
+
+  // Animated styles for the background cards
+  const getCardStyle = (index: number) => {
+    return useAnimatedStyle(() => {
+      const translateY = interpolate(animation.value, [0, 1], [index * -8, index * 105]);
+      const scale = interpolate(animation.value, [0, 1], [1 - index * 0.05, 1]);
+      const opacity = interpolate(animation.value, [0, 1], [0.4 / (index + 1), 1]);
+      const width = interpolate(animation.value, [0, 1], [100 - (index + 1) * 8, 100]);
+
+      return {
+        transform: [{ translateY }, { scale }],
+        opacity,
+        width: `${width}%`,
+        zIndex: -index,
+      };
+    });
+  };
 
   useEffect(() => {
     
@@ -130,7 +161,7 @@ const index = () => {
           elevation: 4,
         }}
       >
-        <Icon color={themeprovider.primary} size={26} weight="bold" />
+        <Icon color={themeprovider.primary} size={24} weight="regular" />
       </View>
       <Text
         style={{
@@ -176,31 +207,35 @@ const index = () => {
           >
             {/* User Profile */}
             <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
-              <View
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 28,
-                  backgroundColor: themeprovider.primary,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  shadowColor: themeprovider.primary,
-                  shadowOffset: { width: 0, height: 8 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 12,
-                  elevation: 10,
-                }}
-              >
-                <Text
+              
+              <Link href="/profile">
+                <View
                   style={{
-                    color: "#ffffff",
-                    fontSize: 22,
-                    fontWeight: "700",
+                    width: 56,
+                    height: 56,
+                    borderRadius: 28,
+                    backgroundColor: themeprovider.primary,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    shadowColor: themeprovider.primary,
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 12,
+                    elevation: 10,
                   }}
                 >
-                  U
-                </Text>
-              </View>
+                  <Text
+                    style={{
+                      color: "#ffffff",
+                      fontSize: 22,
+                      fontWeight: "700",
+                    }}
+                  >
+                    U
+                  </Text>
+                </View>
+              </Link>
+              
 
               <View>
                 <Text
@@ -235,7 +270,7 @@ const index = () => {
                     await requestPermission();
                   }
                   setScannedData(null);
-                  setShowScanner(true);
+                  router.push("/qrscanner")
                 }}
                 style={{
                   width: 48,
@@ -904,113 +939,88 @@ const index = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Wallet Balance Card */}
-        <View style={{ paddingHorizontal: 24 }}>
-          <LinearGradient
-            colors={[themeprovider.primary, themeprovider.tint]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              borderRadius: 32,
-              padding: 28,
-              shadowColor: themeprovider.primary,
-              shadowOffset: { width: 0, height: 12 },
-              shadowOpacity: 0.3,
-              shadowRadius: 20,
-              elevation: 15,
-            }}
-          >
-            {/* Wallet Label */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 20,
-                opacity: 0.9,
-              }}
-            >
-              <View style={{ 
-                backgroundColor: 'rgba(255,255,255,0.2)', 
-                padding: 8, 
-                borderRadius: 12,
-                marginRight: 10
-              }}>
-                <WalletIcon
-                  color="#ffffff"
-                  size={18}
-                  weight="light"
-                />
-              </View>
-              <Text
-                style={{
-                  color: "#ffffff",
-                  fontSize: 15,
-                  fontWeight: "600",
-                }}
-              >
-                Main Wallet
-              </Text>
-              <CaretRightIcon
-                color="#ffffff"
-                size={16}
-                style={{ marginLeft: 4, opacity: 0.8 }}
-              />
-            </View>
+        <View style={{ paddingHorizontal: 24, alignItems: "center", marginTop: 20 }}>
 
-            {/* Balance */}
-            <Text
-              style={{
-                color: "#ffffff",
-                fontSize: 46,
-                fontWeight: "800",
-                letterSpacing: -1.5,
-                marginBottom: 20,
-              }}
-            >
-              $12,000.70
-            </Text>
+      <View
+        style={{
+          position: "absolute",
+          top: -18, // Move up slightly
+          width: "79%", // Narrowest width
+          height: 60,
+          backgroundColor: themeprovider.primary,
+          opacity: 0.2,
+          borderRadius: 24,
+        }}
+      />
+      
+      {/* 3rd Layer (Bottom-most card) */}
+      <View
+        style={{
+          position: "absolute",
+          top: -12, // Move up slightly
+          width: "85%", // Narrowest width
+          height: 60,
+          backgroundColor: themeprovider.primary,
+          opacity: 0.2,
+          borderRadius: 24,
+        }}
+      />
 
-            {/* Growth Indicator */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 12,
-              }}
-            >
-              <View
-                style={{
-                  backgroundColor: "green",
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                  borderRadius: 20,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <TrendUpIcon color={themeprovider.primary} size={16} weight="light" />
-                <Text
-                  style={{
-                    color: themeprovider.primary,
-                    fontSize: 14,
-                    fontWeight: "800",
-                  }}
-                >
-                  +12.5%
-                </Text>
-              </View>
-              <Text
-                style={{
-                  color: "rgba(255,255,255,0.9)",
-                  fontSize: 14,
-                  fontWeight: "600",
-                }}
-              >
-                +$1,340.50 this month
-              </Text>
-            </View>
-          </LinearGradient>
+      {/* 2nd Layer (Middle card) */}
+      <View
+        style={{
+          position: "absolute",
+          top: -6, // Mid position
+          width: "92%", // Medium width
+          height: 60,
+          backgroundColor: themeprovider.primary,
+          opacity: 0.4,
+          borderRadius: 28,
+        }}
+      />
+
+      {/* MAIN CARD (Front) */}
+      <LinearGradient
+        colors={[themeprovider.primary, themeprovider.tint]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          width: "100%",
+          borderRadius: 32,
+          padding: 28,
+          shadowColor: themeprovider.primary,
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.3,
+          shadowRadius: 20,
+          elevation: 15,
+          zIndex: 3, // Ensures it stays on top
+        }}
+      >
+        {/* Wallet Label */}
+        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20, opacity: 0.9 }}>
+          <View style={{ backgroundColor: "rgba(255,255,255,0.2)", padding: 8, borderRadius: 12, marginRight: 10 }}>
+            <Text style={{ color: "#fff" }}>W</Text> {/* Replace with WalletIcon */}
+          </View>
+          <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "600" }}>Main Wallet</Text>
+          <Text style={{ color: "#ffffff", marginLeft: 4, opacity: 0.8 }}>{">"}</Text> {/* Replace with CaretRightIcon */}
         </View>
+
+        {/* Balance */}
+        <Text style={{ color: "#ffffff", fontSize: 42, fontWeight: "800", letterSpacing: -1.5, marginBottom: 20 }}>
+          $12,000.70
+        </Text>
+
+        {/* Growth Indicator */}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <View style={{ backgroundColor: "#ff000033", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "800" }}>+12.5%</Text>
+          </View>
+          <Text style={{ color: "rgba(255,255,255,0.9)", fontSize: 14, fontWeight: "600" }}>
+            +$1,340.50 this month
+          </Text>
+        </View>
+      </LinearGradient>
+    </View>
 
         {/* Action Buttons */}
         <View
@@ -1026,10 +1036,21 @@ const index = () => {
               alignItems: "center",
             }}
           >
-            <ActionButton icon={PaperPlaneTiltIcon} label="Send" />
-            <ActionButton icon={ArrowDownIcon} label="Receive" />
-            <ActionButton icon={ShoppingCartIcon} label="Buy" />
-            <ActionButton icon={PlusIcon} label="Add" />
+            <Link href={"/dashboard/send"} asChild>
+              <ActionButton icon={PaperPlaneTiltIcon} label="Send" />
+            </Link>
+
+            <Link href={"/receive"} asChild>
+              <ActionButton icon={ArrowDownIcon} label="Receive" />
+            </Link>
+
+            <Link href={"/swappage"} asChild>
+              <ActionButton icon={SwapIcon} label="Swap" />
+            </Link>
+
+            <Link href={"/buypage"} asChild>
+              <ActionButton icon={ShoppingCartIcon} label="Buy" />
+            </Link>
           </View>
         </View>
 
@@ -1203,6 +1224,7 @@ const index = () => {
                 usd={item.usdValue}
                 growth={item.growth}
                 chainId={item.chainId}
+                onPress={() => router.push("/coinpage")}
               />
             ))}
           </View>

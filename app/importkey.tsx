@@ -10,6 +10,7 @@ import React, { useEffect } from "react";
 import {
   Dimensions,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -134,14 +135,16 @@ const ImportKey = () => {
 
         <View style={styles.footer}>
           <Link href={"/createwallet"} asChild>
-            <AnimatedTouchableOpacity
-              entering={FadeInUp.duration(600).delay(300).springify()}
-              activeOpacity={0.8}
-              style={[styles.button, styles.primaryButton]}
-            >
-              <Text style={styles.primaryButtonText}>Import Wallet</Text>
-            </AnimatedTouchableOpacity>
-          </Link>
+                      <Pressable>
+                        <Animated.View
+                          entering={FadeInUp.duration(600).delay(200).springify()}
+                          style={[styles.button, styles.primaryButton]}
+                        >
+                          <Text style={styles.primaryButtonText}>Import Wallet</Text>
+                        </Animated.View>
+                      </Pressable>
+                      
+                    </Link>
         </View>
       </SafeAreaView>
     </View>

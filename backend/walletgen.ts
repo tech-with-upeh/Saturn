@@ -5,14 +5,15 @@ import * as bitcoin from "bitcoinjs-lib";
 import { Buffer } from "buffer";
 import { ethers } from "ethers";
 
+
+export interface Coins {
+  name: string;
+      address: string;
+      chain: string;
+}
 export interface WalletResult {
   mnemonic: string;
-  wallets: {
-    BTC: string;
-    ETH: string;
-    BNB: string;
-    SOL: string;
-  };
+  wallets: Coins[];
 }
 
 export async function generatefromMnemonics(
@@ -25,7 +26,11 @@ export async function generatefromMnemonics(
   console.log("Generating Mnemonic:", finalMnemonic);
   // 2️⃣ BTC (Bech32 bc1) → m/84'/0'/0'/0/0
   const btcNode = root.derive("m/84'/0'/0'/0/0");
-  const { address: btcAddress } = bitcoin.payments.p2wpkh({
+  const btcprivatekey = btcNode.privateKey;
+  const btcPublic = btcNode.publicKey;
+  console.log("------>",btcprivatekey?.toString());
+
+  const { address: btcAddress, pubkeys } = bitcoin.payments.p2wpkh({
     pubkey: btcNode.publicKey!,
     network: bitcoin.networks.bitcoin,
   });
@@ -49,11 +54,33 @@ export async function generatefromMnemonics(
   // ✅ Return all
   return {
     mnemonic: finalMnemonic,
-    wallets: {
-      BTC: btcAddress || "",
-      ETH: ethWallet.address,
-      BNB: bnbWallet.address,
-      SOL: solAddress,
-    },
+    // wallets: {
+    //   BTC: btcAddress || "", 
+    //   ETH: ethWallet.address,
+    //   BNB: bnbWallet.address,
+    //   SOL: solAddress,
+    // },
+    wallets: [
+      {
+        name: "bitcoin",
+        chain: "btc",
+        address: btcAddress || ""
+      },
+      {
+        name: "ethereum",
+        chain: "eth",
+        address: ethWallet.address || ""
+      },
+      {
+        name: "solana",
+        chain: "sol",
+        address: solAddress
+      },
+      {
+        name: "BNB",
+        chain: "BSC",
+        address: bnbWallet.address
+      }
+    ]
   };
 }

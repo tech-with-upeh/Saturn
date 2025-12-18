@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#ccc",
-    backgroundColor: "#fff",
+    backgroundColor: "#ffffffce",
   },
   row: {
     flexDirection: "row",
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 50,
     width: "100%",
-    backgroundColor: "#fff",
+    backgroundColor: "#ffffffce",
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#eee",

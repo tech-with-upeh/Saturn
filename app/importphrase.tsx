@@ -2,6 +2,7 @@ import { Link, useRouter } from "expo-router";
 import { CaretLeft, ClipboardText, QrCode } from "phosphor-react-native";
 import React from "react";
 import {
+  Pressable,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -88,13 +89,15 @@ const ImportPhrase = () => {
 
         <View style={styles.footer}>
           <Link href={"/createwallet"} asChild>
-            <AnimatedTouchableOpacity
-              entering={FadeInUp.duration(600).delay(200).springify()}
-              activeOpacity={0.8}
-              style={[styles.button, styles.primaryButton]}
-            >
-              <Text style={styles.primaryButtonText}>Import Wallet</Text>
-            </AnimatedTouchableOpacity>
+            <Pressable>
+              <Animated.View
+                entering={FadeInUp.duration(600).delay(200).springify()}
+                style={[styles.button, styles.primaryButton]}
+              >
+                <Text style={styles.primaryButtonText}>Import Wallet</Text>
+              </Animated.View>
+            </Pressable>
+            
           </Link>
         </View>
       </SafeAreaView>
