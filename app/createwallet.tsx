@@ -1,6 +1,8 @@
 import done from "@/assets/lotties/complete.json";
 import lott from "@/assets/lotties/load.json";
-import { generatefromMnemonics } from "@/backend/walletgen";
+import { Coins, generatefromMnemonics } from "@/backend/walletgen";
+import { UserMeta } from "@/models/UserProfile";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import LottieView from "lottie-react-native";
@@ -24,53 +26,66 @@ import Animated, { FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated"
 import { SafeAreaView } from "react-native-safe-area-context";
 import Logo from "../assets/images/bg.png";
 
-const CreateWallet = async () => {
+const CreateWallet =  () => {
   const router = useRouter();
   const [walletCreated, setWalletCreated] = useState(false);
+  const [showloading, setLoading] = useState(false);
   const [username, setUsername] = useState("");
 
   useEffect(() => {
-    (async () => {
-      try {
-        
-        setTimeout(() => setWalletCreated(true), 1500);
-      } catch (error) {
-        console.log(error);
-      }
-    })();
+    setTimeout(() => setWalletCreated(true), 1500);
   }, []);
 
   const handleGoToDashboard = async () => {
+    
     const data = await generatefromMnemonics();
+    
+     const userprofile : UserMeta = {
+       id: "user",
+       name: username,
+       networth: 0,
+       wallets: [
+         { id: "wallet1",
+       name: "Main Wallet",
+       totalBalance: 0,
+       coins: data.wallets.map((c: Coins, index) => ({
+         id: c.chain,
+         name: c.name,
+         balance: 0,
+         growthInPerc: 0,
+         growthInUsd: 0,
+         createdAt: Date.now(),
+         chain: c.chain,
+         address: c.address
+       })),
+       createdAt: Date.now(),
+       lastActiveAt: Date.now()}
+       ]
+     }
 
-    console.log("called");
-    console.log(data);
-
-    console.log("enddd");
-    // const userprofile : UserMeta = {
-    //   id: "user",
-    //   name: username,
-    //   networth: 0,
-    //   wallets: [
-    //     { id: "wallet1",
-    //   name: "Main Wallet",
-    //   totalBalance: 0,
-    //   coins: data.wallets.map((c: any, index) => ({
-    //     id: 0,
-    //     name: c.name,
-    //     balance: 0,
-    //     growthInPerc: 0,
-    //     growthInUsd: 0,
-    //     createdAt: 0,
-    //     chain: c.chain,
-    //     address: c.address
-    //   })),
-    //   createdAt: 0,
-    //   lastActiveAt: 0}
-    //   ]
-    // }
+     // Safely store non-sensitive data
+     
+     const saveditem = await AsyncStorage.getItem("userProfile");
+     if (saveditem == null) {
+      await AsyncStorage.setItem("userProfile", JSON.stringify(userprofile));
+      
+     }else {
+      console.log("User saved Already")
+     }
+     
+    
+     
+    //  // Safely store sensitive data
+    //  await SecureStore.setItemAsync("mnemonic", data.mnemonic);
+     
+    //  for (const wallet of data.wallets) {
+    //     if (wallet.privateKey) {
+    //         await SecureStore.setItemAsync(`privateKey_${wallet.chain}`, wallet.privateKey);
+    //     }
+    //  }
     
     Keyboard.dismiss(); // Closes keyboard immediately
+    setLoading(false);
     router.replace("/dashboard"); // Use replace so they can't go back to setup
   };
 
@@ -129,8 +144,12 @@ const CreateWallet = async () => {
                       placeholder="Username"
                       placeholderTextColor="#4b5563"
                       style={styles.textInput}
-                      value={username}
-                      onChangeText={setUsername}
+                      
+                      onChangeText={(event) => {
+                        
+                          setUsername(event)
+                       
+                      }}
                       autoCorrect={false}
                     />
                     {username.length >= 3 && <ShieldCheck color="#34d399" size={20} weight="fill" />}
@@ -144,7 +163,11 @@ const CreateWallet = async () => {
               {walletCreated ? (
                 <View style={styles.buttonGroup}>
                   <TouchableOpacity
-                    onPress={ await handleGoToDashboard}
+                    onPress={ () => {
+                      console.log("click")
+                      setLoading(true);
+                      handleGoToDashboard();
+                    }}
                     disabled={isButtonDisabled}
                     activeOpacity={0.8}
                     style={[
@@ -153,8 +176,7 @@ const CreateWallet = async () => {
                       isButtonDisabled && { opacity: 0.4 }
                     ]}
                   >
-                    <Text style={styles.primaryButtonText}>Go to Dashboard</Text>
-                  </TouchableOpacity>
+                    {showloading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Go to Dashboard</Text>}                   </TouchableOpacity>
 
                   <TouchableOpacity style={[styles.button, styles.secondaryButton]}>
                     <Text style={styles.secondaryButtonText}>Back up keys</Text>

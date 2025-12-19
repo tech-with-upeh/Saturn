@@ -1,15 +1,20 @@
+import * as tinysecp from "@bitcoinerlab/secp256k1";
 import { HDKey } from "@scure/bip32";
 import { Keypair } from "@solana/web3.js";
 import * as bip39 from "bip39";
 import * as bitcoin from "bitcoinjs-lib";
 import { Buffer } from "buffer";
+import { ECPairFactory } from "ecpair";
 import { ethers } from "ethers";
+
+const ECPair = ECPairFactory(tinysecp);
 
 
 export interface Coins {
   name: string;
       address: string;
       chain: string;
+      privateKey: string;
 }
 export interface WalletResult {
   mnemonic: string;
@@ -19,39 +24,42 @@ export interface WalletResult {
 export async function generatefromMnemonics(
   mnemonic?: string
 ): Promise<WalletResult> {
-  // 1️⃣ Generate or use given mnemonic
+  // Generate or use given mnemonic
   const finalMnemonic = mnemonic || bip39.generateMnemonic(128);
   const seed = await bip39.mnemonicToSeed(finalMnemonic);
   const root = HDKey.fromMasterSeed(seed);
   console.log("Generating Mnemonic:", finalMnemonic);
-  // 2️⃣ BTC (Bech32 bc1) → m/84'/0'/0'/0/0
+  // BTC (Bech32 bc1) → m/84'/0'/0'/0/0
   const btcNode = root.derive("m/84'/0'/0'/0/0");
   const btcprivatekey = btcNode.privateKey;
   const btcPublic = btcNode.publicKey;
-  console.log("------>",btcprivatekey?.toString());
 
+  if (!btcprivatekey) throw new Error("Failed to derive BTC private key");
+  const btcKeypair = ECPair.fromPrivateKey(Buffer.from(btcprivatekey), { network: bitcoin.networks.bitcoin });
+  const btcWif = btcKeypair.toWIF();
+  
+  
   const { address: btcAddress, pubkeys } = bitcoin.payments.p2wpkh({
     pubkey: btcNode.publicKey!,
     network: bitcoin.networks.bitcoin,
   });
 
-  // 3️⃣ ETH (MetaMask standard) → m/44'/60'/0'/0/0
+  //  ETH → m/44'/60'/0'/0/0
   const ethWallet =
     ethers.HDNodeWallet.fromSeed(seed).derivePath("m/44'/60'/0'/0/0");
 
-  // 4️⃣ BNB (BSC standard) → m/44'/60'/0'/0/1
+
+  //  BNB (BSC standard) → m/44'/60'/0'/0/1
   const bnbWallet =
     ethers.HDNodeWallet.fromSeed(seed).derivePath("m/44'/60'/0'/0/1");
 
-  // 5️⃣ SOL (random keypair)
+
+  // SOL (random keypair)
   const solKeypair = Keypair.generate();
   const solAddress = solKeypair.publicKey.toBase58();
   const solPrivateKey = Buffer.from(solKeypair.secretKey).toString("hex");
 
-  console.log("Generated SOL Address:", solAddress);
-  console.log("SOL Private Key (hex):", solPrivateKey);
-
-  // ✅ Return all
+  // Return all
   return {
     mnemonic: finalMnemonic,
     // wallets: {
@@ -64,22 +72,26 @@ export async function generatefromMnemonics(
       {
         name: "bitcoin",
         chain: "btc",
-        address: btcAddress || ""
+        address: btcAddress || "",
+        privateKey: btcWif
       },
       {
         name: "ethereum",
         chain: "eth",
-        address: ethWallet.address || ""
+        address: ethWallet.address || "",
+        privateKey: ethWallet.privateKey
       },
       {
         name: "solana",
         chain: "sol",
-        address: solAddress
+        address: solAddress,
+        privateKey: solPrivateKey
       },
       {
         name: "BNB",
         chain: "BSC",
-        address: bnbWallet.address
+        address: bnbWallet.address,
+        privateKey: bnbWallet.privateKey
       }
     ]
   };

@@ -1,4 +1,5 @@
 import { useIsDarkMode, useThemeColors } from "@/constants/theme";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   BellSimple,
   CaretRight,
@@ -19,6 +20,10 @@ const SettingsScreen = () => {
   const theme = useThemeColors();
   const isDark = useIsDarkMode();
   const [notifications, setNotifications] = useState(true);
+
+  const clearasyncstorage = async () => {
+    await AsyncStorage.clear();
+  }
 
   const SettingItem = ({ icon: Icon, title, value, onPress, color, isLast }: any) => (
     <TouchableOpacity 
@@ -70,7 +75,7 @@ const SettingsScreen = () => {
         {/* ACCOUNT SECTION */}
         <Text style={[styles.sectionLabel, { color: theme.txtsec }]}>Security & Account</Text>
         <View style={[styles.card, { backgroundColor: theme.card }]}>
-          <SettingItem icon={User} title="Personal Information" />
+          <SettingItem icon={User} title="Personal Information" onPress={clearasyncstorage} />
           <SettingItem icon={ShieldCheck} title="Recovery Phrase" />
           <SettingItem icon={Fingerprint} title="Biometric Lock" value="FaceID" isLast={true} />
         </View>

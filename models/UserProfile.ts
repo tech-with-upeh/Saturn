@@ -1,6 +1,5 @@
 // src/models/UserProfile.ts
 
-export type Chain = 'ETH' | 'BTC' | 'SOL';
 
 export type CoinMeta = {
   id: string;          // uuid
@@ -9,7 +8,7 @@ export type CoinMeta = {
   growthInUsd: number;
   growthInPerc: number;
   address: string;     // public address
-  chain: Chain;
+  chain: string;
   createdAt: number;
 };
 

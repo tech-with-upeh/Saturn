@@ -7,14 +7,33 @@ import {
   HouseSimpleIcon,
   PaperPlaneTiltIcon,
 } from "phosphor-react-native";
-import React, { useEffect, useMemo, useRef } from "react";
-import { Animated, useWindowDimensions, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Keyboard, Platform, useWindowDimensions, View } from "react-native";
 import "../globals.css";
 
 export default function RootLayout() {
   const theme = useThemeColors();
   const { width } = useWindowDimensions();
   const pathname = usePathname(); // Get current route
+
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSubscription = Keyboard.addListener(showEvent, () => {
+      setKeyboardVisible(true);
+    });
+    const hideSubscription = Keyboard.addListener(hideEvent, () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const tabs = useMemo(() => [
     { name: "index", label: "Home", href: "/", icon: HouseSimpleIcon },
@@ -47,6 +66,7 @@ export default function RootLayout() {
 
       <TabList
         style={{
+          display: isKeyboardVisible ? "none" : "flex",
           position: "absolute",
           bottom: 30, // Lifted slightly more
           left: "5%",
@@ -89,7 +109,7 @@ export default function RootLayout() {
             <TabTrigger
               key={tab.name}
               name={tab.name}
-              href={tab.href}
+              href={tab.href as any}
               style={{
                 width: tabWidth,
                 height: "100%",

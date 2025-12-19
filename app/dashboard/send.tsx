@@ -35,7 +35,7 @@ const SendScreen = () => {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background, paddingTop: 20 }]}>
         
         {/* HEADER */}
         <View style={styles.header}>
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   addressInputContainer: { flexDirection: 'row', alignItems: 'center', borderRadius: 20, borderWidth: 1, paddingHorizontal: 16, minHeight: 80 },
   addressInput: { flex: 1, fontSize: 15, fontWeight: '500', paddingVertical: 12 },
   pasteButton: { backgroundColor: 'rgba(255,255,255,0.1)', padding: 8, borderRadius: 10 },
-  footer: { position: 'absolute', bottom: 30, left: 24, right: 24 },
+  footer: { position: 'relative', paddingHorizontal: 22, top: 30},
   sendButton: { height: 64, borderRadius: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
   sendButtonText: { color: '#fff', fontSize: 17, fontWeight: '700', flex: 1, textAlign: 'center', marginLeft: 32 },
   sendIconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
