@@ -15,10 +15,15 @@ export interface Coins {
       address: string;
       chain: string;
       privateKey: string;
+      
 }
 export interface WalletResult {
   mnemonic: string;
   wallets: Coins[];
+}
+
+export function validateMnemonic(mnemonic: string): boolean {
+  return bip39.validateMnemonic(mnemonic);
 }
 
 export async function generatefromMnemonics(
@@ -26,13 +31,14 @@ export async function generatefromMnemonics(
 ): Promise<WalletResult> {
   // Generate or use given mnemonic
   const finalMnemonic = mnemonic || bip39.generateMnemonic(128);
+  
   const seed = await bip39.mnemonicToSeed(finalMnemonic);
   const root = HDKey.fromMasterSeed(seed);
   console.log("Generating Mnemonic:", finalMnemonic);
   // BTC (Bech32 bc1) → m/84'/0'/0'/0/0
   const btcNode = root.derive("m/84'/0'/0'/0/0");
   const btcprivatekey = btcNode.privateKey;
-  const btcPublic = btcNode.publicKey;
+  const btcpublickey = btcNode.publicKey;
 
   if (!btcprivatekey) throw new Error("Failed to derive BTC private key");
   const btcKeypair = ECPair.fromPrivateKey(Buffer.from(btcprivatekey), { network: bitcoin.networks.bitcoin });

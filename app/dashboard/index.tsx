@@ -1,10 +1,12 @@
 import CoinTile from "@/components/cointile";
 import SkeletonLoader from "@/components/shimmer";
 import MemeCard from "@/components/trendingcard";
-import { COIN_ICONS, sampledata } from "@/constants/appconstants";
+import { COIN_ICONS } from "@/constants/appconstants";
 import { useIsDarkMode, useThemeColors } from "@/constants/theme";
+import { CoinMeta } from "@/models/UserProfile";
 import { fetchMemeCoins } from "@/services/trendingCoinService";
-import { CameraView, useCameraPermissions } from "expo-camera";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useCameraPermissions } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, router } from "expo-router";
 import {
@@ -38,12 +40,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const index = () => {
   const [coins, setCoins] = useState<any[]>([]);
+  const [userprofile, setUserprofile] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showScanner, setShowScanner] = React.useState(false);
-  const [scannedData, setScannedData] = useState<string | null>(null);
   const [permission, requestPermission] = useCameraPermissions();
+  const [ActiveWallet, setActiveWallet] = useState<any>({});
 
   const [expanded, setExpanded] = useState(false);
   const animation = useSharedValue(0);
@@ -74,7 +76,14 @@ const index = () => {
   };
 
   useEffect(() => {
-    
+
+    const saveditem = async () => {
+      const data  = await AsyncStorage.getItem("userProfile");
+      console.log(data)
+      setUserprofile(JSON.parse(data!));
+      setActiveWallet(JSON.parse(data!).wallets[0]);
+    }
+    saveditem()
     const load = async () => {
       const data = await fetchMemeCoins();
       if (data.length === 0) {
@@ -90,7 +99,7 @@ const index = () => {
 
   const colorsche = useIsDarkMode();
   const themeprovider = useThemeColors();
-  const sampdata = sampledata.slice(0, 8);
+
 
   // Sample notifications
   const notifications = [
@@ -231,7 +240,7 @@ const index = () => {
                       fontWeight: "700",
                     }}
                   >
-                    U
+                    {userprofile?.name?.charAt(0).toUpperCase()}
                   </Text>
                 </View>
               </Link>
@@ -256,7 +265,7 @@ const index = () => {
                     letterSpacing: -0.5,
                   }}
                 >
-                  DEV Upeh
+                  {userprofile?.name}
                 </Text>
               </View>
             </View>
@@ -269,20 +278,20 @@ const index = () => {
                   if (!permission?.granted) {
                     await requestPermission();
                   }
-                  setScannedData(null);
+                  
                   router.push("/qrscanner")
                 }}
                 style={{
                   width: 48,
                   height: 48,
                   borderRadius: 24,
-                  backgroundColor: showScanner ? themeprovider.primary : themeprovider.card,
+                  backgroundColor: themeprovider.card,
                   justifyContent: "center",
                   alignItems: "center",
                 }}
               >
                 <QrCodeIcon 
-                  color={showScanner ? "#ffffff" : themeprovider.text} 
+                  color={themeprovider.text} 
                   size={24} 
                   weight="light" 
                 />
@@ -578,358 +587,7 @@ const index = () => {
         </TouchableOpacity>
       )}
 
-      {/* QR Code Scanner Overlay */}
-      {showScanner && (
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "#000000",
-            zIndex: 1000,
-          }}
-        >
-          <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
-            {/* Header */}
-            <View
-              style={{
-                paddingHorizontal: 24,
-                paddingVertical: 16,
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                backgroundColor: "rgba(0,0,0,0.8)",
-              }}
-            >
-              <Text
-                style={{
-                  color: "#ffffff",
-                  fontSize: 20,
-                  fontWeight: "800",
-                }}
-              >
-                Scan QR Code
-              </Text>
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => {
-                  setShowScanner(false);
-                  setScannedData(null);
-                }}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: "rgba(255,255,255,0.1)",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Text
-                  style={{
-                    color: "#ffffff",
-                    fontSize: 20,
-                    fontWeight: "600",
-                  }}
-                >
-                  ✕
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Camera View */}
-            <View style={{ flex: 1, position: "relative" }}>
-              {permission?.granted ? (
-                <>
-                  <CameraView
-                    style={{ flex: 1 }}
-                    facing="back"
-                    barcodeScannerSettings={{
-                      barcodeTypes: ["qr"],
-                    }}
-                    onBarcodeScanned={(data) => {
-                      if (!scannedData) {
-                        setScannedData(data.data);
-                      }
-                    }}
-                  />
-
-                  {/* Scan Area Overlay */}
-                  <View
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    {/* Corner overlays */}
-                    <View
-                      style={{
-                        width: 280,
-                        height: 280,
-                        position: "relative",
-                      }}
-                    >
-                      {/* Top Left */}
-                      <View
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: 40,
-                          height: 40,
-                          borderTopWidth: 4,
-                          borderLeftWidth: 4,
-                          borderColor: themeprovider.primary,
-                          borderTopLeftRadius: 8,
-                        }}
-                      />
-                      {/* Top Right */}
-                      <View
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          right: 0,
-                          width: 40,
-                          height: 40,
-                          borderTopWidth: 4,
-                          borderRightWidth: 4,
-                          borderColor: themeprovider.primary,
-                          borderTopRightRadius: 8,
-                        }}
-                      />
-                      {/* Bottom Left */}
-                      <View
-                        style={{
-                          position: "absolute",
-                          bottom: 0,
-                          left: 0,
-                          width: 40,
-                          height: 40,
-                          borderBottomWidth: 4,
-                          borderLeftWidth: 4,
-                          borderColor: themeprovider.primary,
-                          borderBottomLeftRadius: 8,
-                        }}
-                      />
-                      {/* Bottom Right */}
-                      <View
-                        style={{
-                          position: "absolute",
-                          bottom: 0,
-                          right: 0,
-                          width: 40,
-                          height: 40,
-                          borderBottomWidth: 4,
-                          borderRightWidth: 4,
-                          borderColor: themeprovider.primary,
-                          borderBottomRightRadius: 8,
-                        }}
-                      />
-                    </View>
-                  </View>
-
-                  {/* Instructions */}
-                  <View
-                    style={{
-                      position: "absolute",
-                      bottom: 100,
-                      left: 0,
-                      right: 0,
-                      alignItems: "center",
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: "rgba(0,0,0,0.7)",
-                        paddingHorizontal: 24,
-                        paddingVertical: 16,
-                        borderRadius: 16,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: "#ffffff",
-                          fontSize: 15,
-                          fontWeight: "600",
-                          textAlign: "center",
-                        }}
-                      >
-                        Position QR code within the frame
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Scanned Result */}
-                  {scannedData && (
-                    <View
-                      style={{
-                        position: "absolute",
-                        bottom: 30,
-                        left: 0,
-                        right: 0,
-                        backgroundColor: themeprovider.card,
-                        padding: 24,
-                        borderTopLeftRadius: 32,
-                        borderTopRightRadius: 32,
-                      }}
-                    >
-                      <View
-                        style={{
-                          marginBottom: 20,
-                        }}
-                      >
-                        <View
-                          style={{
-                            width: 60,
-                            height: 60,
-                            borderRadius: 30,
-                            backgroundColor: `${themeprovider.primary}20`,
-                            justifyContent: "center",
-                            alignItems: "center",
-                            marginBottom: 16,
-                            alignSelf: "center",
-                          }}
-                        >
-                          <CheckCircleIcon
-                            color={themeprovider.primary}
-                            size={32}
-                            weight="fill"
-                          />
-                        </View>
-                        <Text
-                          style={{
-                            color: themeprovider.text,
-                            fontSize: 20,
-                            fontWeight: "800",
-                            textAlign: "center",
-                            marginBottom: 8,
-                          }}
-                        >
-                          QR Code Scanned
-                        </Text>
-                        <Text
-                          style={{
-                            color: themeprovider.txtsec,
-                            fontSize: 14,
-                            fontWeight: "500",
-                            textAlign: "center",
-                            marginBottom: 16,
-                          }}
-                        >
-                          {scannedData}
-                        </Text>
-                      </View>
-                      <TouchableOpacity
-                        activeOpacity={0.7}
-                        onPress={() => {
-                          setShowScanner(false);
-                          setScannedData(null);
-                        }}
-                        style={{
-                          backgroundColor: themeprovider.primary,
-                          paddingVertical: 16,
-                          borderRadius: 16,
-                          marginBottom: 8,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: "#ffffff",
-                            fontSize: 16,
-                            fontWeight: "700",
-                            textAlign: "center",
-                          }}
-                        >
-                          Done
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        activeOpacity={0.7}
-                        onPress={() => setScannedData(null)}
-                        style={{
-                          paddingVertical: 12,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            color: themeprovider.primary,
-                            fontSize: 15,
-                            fontWeight: "700",
-                            textAlign: "center",
-                          }}
-                        >
-                          Scan Another
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </>
-              ) : (
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    paddingHorizontal: 40,
-                  }}
-                >
-                  <WarningCircleIcon color="#F59E0B" size={64} weight="fill" />
-                  <Text
-                    style={{
-                      color: "#ffffff",
-                      fontSize: 20,
-                      fontWeight: "700",
-                      marginTop: 20,
-                      marginBottom: 12,
-                      textAlign: "center",
-                    }}
-                  >
-                    Camera Permission Required
-                  </Text>
-                  <Text
-                    style={{
-                      color: "rgba(255,255,255,0.7)",
-                      fontSize: 15,
-                      fontWeight: "500",
-                      textAlign: "center",
-                      marginBottom: 32,
-                    }}
-                  >
-                    Please grant camera access to scan QR codes
-                  </Text>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={requestPermission}
-                    style={{
-                      backgroundColor: themeprovider.primary,
-                      paddingHorizontal: 32,
-                      paddingVertical: 16,
-                      borderRadius: 16,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "#ffffff",
-                        fontSize: 16,
-                        fontWeight: "700",
-                      }}
-                    >
-                      Grant Permission
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          </SafeAreaView>
-        </View>
-      )}
+      
 
       <ScrollView
         style={{
@@ -999,24 +657,24 @@ const index = () => {
         {/* Wallet Label */}
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20, opacity: 0.9 }}>
           <View style={{ backgroundColor: "rgba(255,255,255,0.2)", padding: 8, borderRadius: 12, marginRight: 10 }}>
-            <Text style={{ color: "#fff" }}>W</Text> {/* Replace with WalletIcon */}
+            <Text style={{ color: "#fff" }}>{ActiveWallet.name?.charAt(0)}</Text> {/* Replace with WalletIcon */}
           </View>
-          <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "600" }}>Main Wallet</Text>
+          <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "600" }}>{ActiveWallet.name}</Text>
           <Text style={{ color: "#ffffff", marginLeft: 4, opacity: 0.8 }}>{">"}</Text> {/* Replace with CaretRightIcon */}
         </View>
 
         {/* Balance */}
         <Text style={{ color: "#ffffff", fontSize: 42, fontWeight: "800", letterSpacing: -1.5, marginBottom: 20 }}>
-          $12,000.70
+          $ {ActiveWallet.totalBalance}
         </Text>
 
         {/* Growth Indicator */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <View style={{ backgroundColor: "#ff000033", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "800" }}>+12.5%</Text>
+            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "800" }}>+{ActiveWallet.growthInPerc}%</Text>
           </View>
           <Text style={{ color: "rgba(255,255,255,0.9)", fontSize: 14, fontWeight: "600" }}>
-            +$1,340.50 this month
+            +$ {ActiveWallet.growthInUsd}
           </Text>
         </View>
       </LinearGradient>
@@ -1155,7 +813,7 @@ const index = () => {
               {!loading &&
                 !err &&
                 coins.map((item, index) => (
-                  <View key={index} style={{ marginRight: 16 }}>
+                  <View key={index} style={{ marginRight: 3 }}>
                     <MemeCard
                       imageUrl={item.openGraph}
                       chainIcon={COIN_ICONS[item.chainId]}
@@ -1199,7 +857,7 @@ const index = () => {
                   fontWeight: "500",
                 }}
               >
-                {sampdata.length} cryptocurrencies
+                {ActiveWallet.coins?.length} Coins
               </Text>
             </View>
             <TouchableOpacity activeOpacity={0.7}>
@@ -1215,15 +873,15 @@ const index = () => {
             </TouchableOpacity>
           </View>
 
-          <View style={{ gap: 16 }}>
-            {sampdata.map((item, index) => (
+          <View style={{ gap: 16, paddingBottom: 24 }}>
+            {ActiveWallet.coins?.map((item : CoinMeta, index : number) => (
               <CoinTile
                 key={index}
                 name={item.name}
-                balance={item.balance}
-                usd={item.usdValue}
-                growth={item.growth}
-                chainId={item.chainId}
+                balance={item.balance.toString()}
+                usd={item.growthInUsd.toString()}
+                growth={item.growthInPerc.toString()}
+                chainId={item.id}
                 onPress={() => router.push("/coinpage")}
               />
             ))}

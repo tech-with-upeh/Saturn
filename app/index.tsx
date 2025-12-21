@@ -1,5 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, useRouter } from "expo-router";
+import { Link, router, useRouter } from "expo-router";
 import { useEffect } from "react";
 import {
   Dimensions,
@@ -30,8 +31,17 @@ const { width } = Dimensions.get('window');
 const SaturnIllustration = () => {
   const rotation = useSharedValue(0);
   const floatY = useSharedValue(0);
+  const checkasync = async () => {
+    const check = await AsyncStorage.getItem('userProfile');
+    if (check != null) { 
+      router.replace("/dashboard");
+    } else {
+      console.log("create")
+    }
+  }
 
   useEffect(() => {
+    checkasync();
     rotation.value = withRepeat(
       withTiming(360, { duration: 20000, easing: Easing.linear }),
       -1,

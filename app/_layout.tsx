@@ -56,6 +56,7 @@ export default function RootLayout() {
           presentation: "modal",
           animation: "fade",
         }}
+        
       />
       <Stack.Screen
         name="qrscanner"

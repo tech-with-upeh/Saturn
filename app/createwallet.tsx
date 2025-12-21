@@ -1,13 +1,14 @@
 import done from "@/assets/lotties/complete.json";
 import lott from "@/assets/lotties/load.json";
 import { Coins, generatefromMnemonics } from "@/backend/walletgen";
-import { UserMeta } from "@/models/UserProfile";
+import { KeysMeta, UserMeta } from "@/models/UserProfile";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
 import LottieView from "lottie-react-native";
-import { ShieldCheck, UserCircle } from "phosphor-react-native";
-import React, { useEffect, useState } from "react";
+import { ShieldCheckIcon, UserCircleIcon } from "phosphor-react-native";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ImageBackground,
@@ -39,15 +40,29 @@ const CreateWallet =  () => {
   const handleGoToDashboard = async () => {
     
     const data = await generatefromMnemonics();
+
+    const keysprofile : KeysMeta = {
+      id: "Keys",
+      mnemonics: data.mnemonic,
+      wallets: data.wallets.map((c: Coins, index) => ({
+        name: c.name,
+        privatekey: c.privateKey,
+        publickey: c.address
+      })),
+      createdAt: Date.now(),
+      
+    }
     
      const userprofile : UserMeta = {
        id: "user",
        name: username,
        networth: 0,
        wallets: [
-         { id: "wallet1",
+         { 
        name: "Main Wallet",
        totalBalance: 0,
+       growthInPerc: 0,
+       growthInUsd: 0,
        coins: data.wallets.map((c: Coins, index) => ({
          id: c.chain,
          name: c.name,
@@ -64,25 +79,13 @@ const CreateWallet =  () => {
      }
 
      // Safely store non-sensitive data
+     const savekeys = await SecureStore.setItemAsync("keys", JSON.stringify(keysprofile));
      
      const saveditem = await AsyncStorage.getItem("userProfile");
      if (saveditem == null) {
       await AsyncStorage.setItem("userProfile", JSON.stringify(userprofile));
       
-     }else {
-      console.log("User saved Already")
      }
-     
-    
-     
-    //  // Safely store sensitive data
-    //  await SecureStore.setItemAsync("mnemonic", data.mnemonic);
-     
-    //  for (const wallet of data.wallets) {
-    //     if (wallet.privateKey) {
-    //         await SecureStore.setItemAsync(`privateKey_${wallet.chain}`, wallet.privateKey);
-    //     }
-    //  }
     
     Keyboard.dismiss(); // Closes keyboard immediately
     setLoading(false);
@@ -139,7 +142,7 @@ const CreateWallet =  () => {
               {walletCreated && (
                 <Animated.View entering={FadeInDown} style={styles.inputWrapper}>
                   <View style={styles.inputContainer}>
-                    <UserCircle color={username.length >= 3 ? "#ac71ff" : "#4b5563"} size={22} weight="bold" />
+                    <UserCircleIcon color={username.length >= 3 ? "#ac71ff" : "#4b5563"} size={22} weight="bold" />
                     <TextInput
                       placeholder="Username"
                       placeholderTextColor="#4b5563"
@@ -152,7 +155,7 @@ const CreateWallet =  () => {
                       }}
                       autoCorrect={false}
                     />
-                    {username.length >= 3 && <ShieldCheck color="#34d399" size={20} weight="fill" />}
+                    {username.length >= 3 && <ShieldCheckIcon color="#34d399" size={20} weight="fill" />}
                   </View>
                 </Animated.View>
               )}

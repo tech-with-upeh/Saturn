@@ -1,5 +1,7 @@
 import { useIsDarkMode, useThemeColors } from "@/constants/theme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import {
   BellSimple,
   CaretRight,
@@ -23,6 +25,8 @@ const SettingsScreen = () => {
 
   const clearasyncstorage = async () => {
     await AsyncStorage.clear();
+    await SecureStore.deleteItemAsync("keys");
+    router.replace("/");
   }
 
   const SettingItem = ({ icon: Icon, title, value, onPress, color, isLast }: any) => (
@@ -75,7 +79,7 @@ const SettingsScreen = () => {
         {/* ACCOUNT SECTION */}
         <Text style={[styles.sectionLabel, { color: theme.txtsec }]}>Security & Account</Text>
         <View style={[styles.card, { backgroundColor: theme.card }]}>
-          <SettingItem icon={User} title="Personal Information" onPress={clearasyncstorage} />
+          <SettingItem icon={User} title="Personal Information"  />
           <SettingItem icon={ShieldCheck} title="Recovery Phrase" />
           <SettingItem icon={Fingerprint} title="Biometric Lock" value="FaceID" isLast={true} />
         </View>
@@ -111,7 +115,7 @@ const SettingsScreen = () => {
         <Text style={[styles.sectionLabel, { color: theme.txtsec }]}>Advanced</Text>
         <View style={[styles.card, { backgroundColor: theme.card }]}>
           <SettingItem icon={Info} title="Help Support" />
-          <SettingItem icon={Trash} title="Reset Wallet" color="#EF4444" isLast={true} />
+          <SettingItem icon={Trash} title="Reset Wallet" color="#EF4444" isLast={true} onPress={clearasyncstorage} />
         </View>
 
         <View style={styles.footer}>

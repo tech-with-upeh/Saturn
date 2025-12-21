@@ -1,5 +1,14 @@
-// src/models/UserProfile.ts
-
+export type WalletKeys ={
+  name: string;
+  privatekey: string;
+  publickey: string;
+}
+export type KeysMeta = {
+  id: string;
+  mnemonics: string;
+  wallets: WalletKeys[];
+  createdAt: number;
+}
 
 export type CoinMeta = {
   id: string;          // uuid
@@ -12,10 +21,11 @@ export type CoinMeta = {
   createdAt: number;
 };
 
-export type WalletMeta = {
-  id: string;          // user UUID
+export type WalletMeta = {        // user UUID
   name: string;
   totalBalance: number;
+  growthInUsd: number;
+  growthInPerc: number;
   coins: CoinMeta[];
   createdAt: number;
   lastActiveAt: number;

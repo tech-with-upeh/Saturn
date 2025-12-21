@@ -1,7 +1,12 @@
-import { Link, useRouter } from "expo-router";
+import { Coins, generatefromMnemonics, validateMnemonic } from "@/backend/walletgen";
+import { KeysMeta, UserMeta } from "@/models/UserProfile";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
 import { CaretLeft, ClipboardText, QrCode } from "phosphor-react-native";
 import React from "react";
 import {
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StatusBar,
@@ -17,8 +22,74 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 const ImportPhrase = () => {
+
+  const [phrase, setPhrase] = React.useState(""); 
+  const [walletName, setWalletName] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
 
+  const handleImportWallet = async () => {
+    if (!phrase || !walletName) {
+      return;
+    }
+    setIsLoading(true);
+    
+   const checkmnemonic = validateMnemonic(phrase);
+   if (!checkmnemonic) {
+    setIsLoading(false);
+    return;
+   }
+    const data = await generatefromMnemonics(phrase);
+    
+        const keysprofile : KeysMeta = {
+          id: "Keys",
+          mnemonics: data.mnemonic,
+          wallets: data.wallets.map((c: Coins, index) => ({
+            name: c.name,
+            privatekey: c.privateKey,
+            publickey: c.address
+          })),
+          createdAt: Date.now(),
+          
+        }
+        
+         const userprofile : UserMeta = {
+           id: "user",
+           name: "User",
+           networth: 0,
+           wallets: [
+             { 
+           name: "Main Wallet",
+           totalBalance: 0,
+           growthInPerc: 0,
+           growthInUsd: 0,
+           coins: data.wallets.map((c: Coins, index) => ({
+             id: c.chain,
+             name: c.name,
+             balance: 0,
+             growthInPerc: 0,
+             growthInUsd: 0,
+             createdAt: Date.now(),
+             chain: c.chain,
+             address: c.address
+           })),
+           createdAt: Date.now(),
+           lastActiveAt: Date.now()}
+           ]
+         }
+    
+         // Safely store non-sensitive data
+         const savekeys = await SecureStore.setItemAsync("keys", JSON.stringify(keysprofile));
+         
+         const saveditem = await AsyncStorage.getItem("userProfile");
+         if (saveditem == null) {
+          await AsyncStorage.setItem("userProfile", JSON.stringify(userprofile));
+          
+         }
+        
+        setIsLoading(false);
+        router.replace("/dashboard"); // Use replace so they can't go back to setup
+      };
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
@@ -59,6 +130,8 @@ const ImportPhrase = () => {
                 textAlignVertical="top"
                 style={styles.textArea}
                 placeholderTextColor="#6b7280"
+                onChangeText={setPhrase}
+                value={phrase}
                 selectionColor="#ac71ff"
               />
               <TouchableOpacity activeOpacity={0.7} style={styles.pasteButton}>
@@ -79,6 +152,8 @@ const ImportPhrase = () => {
             <View style={styles.singleInputContainer}>
               <TextInput
                 placeholder=" e.g. My Main Wallet"
+                onChangeText={setWalletName}
+                value={walletName}
                 style={styles.singleInput}
                 placeholderTextColor="#6b7280"
                 selectionColor="#ac71ff"
@@ -88,8 +163,10 @@ const ImportPhrase = () => {
         </ScrollView>
 
         <View style={styles.footer}>
-          <Link href={"/createwallet"} asChild>
-            <Pressable>
+            {
+              isLoading ? (
+                <ActivityIndicator size="small" color="#ac71ff" />
+              ) : <Pressable onPress={handleImportWallet}>
               <Animated.View
                 entering={FadeInUp.duration(600).delay(200).springify()}
                 style={[styles.button, styles.primaryButton]}
@@ -97,8 +174,8 @@ const ImportPhrase = () => {
                 <Text style={styles.primaryButtonText}>Import Wallet</Text>
               </Animated.View>
             </Pressable>
+            }
             
-          </Link>
         </View>
       </SafeAreaView>
     </View>

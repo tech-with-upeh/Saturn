@@ -1,13 +1,13 @@
 import { useThemeColors } from "@/constants/theme";
 import { router } from "expo-router";
 import {
-    ArrowLeft,
-    CheckCircle,
-    Copy,
-    DotsThreeVertical,
-    Plus,
-    SignOut,
-    UserCircleGear
+  ArrowLeft,
+  CheckCircle,
+  Copy,
+  DotsThreeVerticalIcon,
+  Plus,
+  SignOut,
+  UserCircleGear
 } from "phosphor-react-native";
 import React from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -79,9 +79,9 @@ const ProfileScreen = ({ navigation }: any) => {
                   <Copy color={theme.txtsec} size={12} style={{ marginLeft: 4 }} />
                 </View>
               </View>
-              <View style={{ alignItems: 'end' }}>
+              <View style={{alignItems: 'end', justifyContent: 'center', flexDirection: 'row' }}>
                 <Text style={[styles.accBalance, { color: theme.text }]}>{acc.balance}</Text>
-                <DotsThreeVertical color={theme.txtsec} size={18} />
+                <DotsThreeVerticalIcon color={theme.txtsec} size={18} />
               </View>
             </View>
           </TouchableOpacity>
