@@ -14,6 +14,7 @@ export type CoinMeta = {
   id: string;          // uuid
   name: string;       // "Main Wallet"
   balance: number;
+  usdBalance: number;
   growthInUsd: number;
   growthInPerc: number;
   address: string;     // public address

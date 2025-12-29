@@ -79,7 +79,7 @@ const ProfileScreen = ({ navigation }: any) => {
                   <Copy color={theme.txtsec} size={12} style={{ marginLeft: 4 }} />
                 </View>
               </View>
-              <View style={{alignItems: 'end', justifyContent: 'center', flexDirection: 'row' }}>
+              <View style={{alignItems: 'flex-end', justifyContent: 'center', flexDirection: 'row' }}>
                 <Text style={[styles.accBalance, { color: theme.text }]}>{acc.balance}</Text>
                 <DotsThreeVerticalIcon color={theme.txtsec} size={18} />
               </View>

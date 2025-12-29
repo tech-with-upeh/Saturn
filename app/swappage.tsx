@@ -1,21 +1,21 @@
 import { useThemeColors } from "@/constants/theme";
 import { router } from "expo-router";
 import {
-    ArrowLeftIcon,
-    ArrowsDownUp, CaretDown,
-    Check
+  ArrowLeftIcon,
+  ArrowsDownUp, CaretDown,
+  Check
 } from "phosphor-react-native";
 import React, { useState } from "react";
 import {
-    FlatList,
-    Keyboard,
-    Modal,
-    SafeAreaView, StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View
+  FlatList,
+  Keyboard,
+  Modal,
+  SafeAreaView, StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
 } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 
@@ -65,7 +65,7 @@ const SwapScreen = () => {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background, paddingTop: 24 }]}>
         
         {/* HEADER */}
         <View style={styles.header}>

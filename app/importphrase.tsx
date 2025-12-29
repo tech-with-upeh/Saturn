@@ -1,9 +1,10 @@
 import { Coins, generatefromMnemonics, validateMnemonic } from "@/backend/walletgen";
+import Toast, { ToastType } from "@/components/toast";
 import { KeysMeta, UserMeta } from "@/models/UserProfile";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
-import { CaretLeft, ClipboardText, QrCode } from "phosphor-react-native";
+import { CaretLeft, ClipboardText, QrCode, User } from "phosphor-react-native";
 import React from "react";
 import {
   ActivityIndicator,
@@ -25,17 +26,41 @@ const ImportPhrase = () => {
 
   const [phrase, setPhrase] = React.useState(""); 
   const [walletName, setWalletName] = React.useState("");
+  const [username, setUsername] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
+  
+  const [toastVisible, setToastVisible] = React.useState(false);
+  const [toastMessage, setToastMessage] = React.useState("");
+  const [toastType, setToastType] = React.useState<ToastType>("success");
+
+  const showToast = (message: string, type: ToastType = "success") => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
+  };
+
   const router = useRouter();
 
   const handleImportWallet = async () => {
-    if (!phrase || !walletName) {
+    if (!phrase) {
+       showToast("Please enter your recovery phrase", "error");
+       return;
+    }
+    if (!walletName) {
+      showToast("Please give your wallet a name", "error");
       return;
     }
+    if (!username) {
+      showToast("Please create a username", "error");
+      return;
+    }
+
     setIsLoading(true);
     
    const checkmnemonic = validateMnemonic(phrase);
    if (!checkmnemonic) {
+    console.log("Wallet .....Invalid")
+    showToast("Invalid recovery phrase. Please check and try again.", "error");
     setIsLoading(false);
     return;
    }
@@ -55,11 +80,11 @@ const ImportPhrase = () => {
         
          const userprofile : UserMeta = {
            id: "user",
-           name: "User",
+           name: username,
            networth: 0,
            wallets: [
              { 
-           name: "Main Wallet",
+           name: walletName,
            totalBalance: 0,
            growthInPerc: 0,
            growthInUsd: 0,
@@ -67,6 +92,7 @@ const ImportPhrase = () => {
              id: c.chain,
              name: c.name,
              balance: 0,
+             usdBalance: 0,
              growthInPerc: 0,
              growthInUsd: 0,
              createdAt: Date.now(),
@@ -83,18 +109,25 @@ const ImportPhrase = () => {
          
          const saveditem = await AsyncStorage.getItem("userProfile");
          if (saveditem == null) {
-          await AsyncStorage.setItem("userProfile", JSON.stringify(userprofile));
-          
+          await AsyncStorage.setItem("userProfile", JSON.stringify(userprofile)); 
          }
         
         setIsLoading(false);
-        router.replace("/dashboard"); // Use replace so they can't go back to setup
+        showToast("Wallet imported successfully!", "success");
+        setTimeout(() => {
+          router.replace("/dashboard");
+        }, 1500); 
       };
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       
-      
+      <Toast 
+        visible={toastVisible}
+        message={toastMessage}
+        type={toastType}
+        onHide={() => setToastVisible(false)}
+      />
 
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
@@ -158,6 +191,24 @@ const ImportPhrase = () => {
                 placeholderTextColor="#6b7280"
                 selectionColor="#ac71ff"
               />
+            </View>
+          </Animated.View>
+
+          <Animated.View
+            entering={FadeInDown.duration(600).delay(200).springify()}
+            style={styles.inputSection}
+          >
+            <Text style={styles.label}>Create Username</Text>
+            <View style={styles.singleInputContainer}>
+              <TextInput
+                placeholder=" e.g. CryptoKing"
+                onChangeText={setUsername}
+                value={username}
+                style={styles.singleInput}
+                placeholderTextColor="#6b7280"
+                selectionColor="#ac71ff"
+              />
+              <User size={20} color="#6b7280" style={{ position: 'absolute', right: 16 }} />
             </View>
           </Animated.View>
         </ScrollView>

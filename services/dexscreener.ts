@@ -8,13 +8,13 @@ function sleep(ms: number): Promise<void> {
 }
 
 async function safeFetch<T = any>(url: string, ttl = 60000): Promise<T> {
-  // ✅ Cache check
+  // Cache check
   if (cache.has(url)) {
     const { data, time } = cache.get(url)!;
     if (Date.now() - time < ttl) return data as T;
   }
 
-  // 🌐 Fetch request
+  // Fetch request
   const res = await fetch(url, {
     method: "GET",
     headers: {
@@ -25,7 +25,7 @@ async function safeFetch<T = any>(url: string, ttl = 60000): Promise<T> {
   if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
   const data = (await res.json()) as T;
 
-  // 💾 Store cache
+  // Store cache
   cache.set(url, { data, time: Date.now() });
   return data;
 }

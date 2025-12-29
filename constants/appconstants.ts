@@ -12,3 +12,7 @@ export const COIN_ICONS: Record<string, any> = {
   BSC: bnb,
   nocoin: nocoin,
 };
+
+export const test = true;
+
+export const etherscan = "api.etherscan.io";

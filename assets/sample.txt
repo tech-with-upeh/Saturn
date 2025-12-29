@@ -1,0 +1,18 @@
+{
+    "createdAt": 1766840522037, 
+    "id": "Keys", 
+    "mnemonics": "middle puppy isolate network rude room muffin aim genre nice deliver bubble", 
+    "wallets": [
+        {
+            "name": "bitcoin", 
+            "privatekey": "Ky1b7CfaFhqoicxYTsq5FRWRJQmu4bYbYqE2ii5MsutEVGufHWh4", 
+            "publickey": "bc1qldu2s9flnr6k6clvzwftvdwvadf2d8wefmu2ht"}, 
+        {
+            "name": "ethereum", "privatekey": "0xa83f4236a25f229efa935113b8f24c016170db1893f39339e3776409ada3a326", 
+            "publickey": "0x9F92d61E19e0623496F7aB7a84E984E0bDb8609c"}, 
+        {
+            "name": "solana", 
+            "privatekey": "8c15917701d6015a79b092464e54f42c65cb4e81fc66760d1c470d67bce8d3cf4f756dd81cb8133d1b56ed0995fa13ffcacb769504b07ccd90a750923d82f835", "publickey": "6MB4evESQntGZ1EbubMBYFhPy9uDckpDuTaUeHW1mLY4"}, 
+        {
+            "name": "BNB", "privatekey": "0x7556f36b6017cb4fb28fe9897b7c540b8b9290a7a4f277134b59066885da13f1", 
+            "publickey": "0xc9fDEa173C8d7Db32862DA8D343A60027675aaC9"}]}

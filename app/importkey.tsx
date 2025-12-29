@@ -3,15 +3,21 @@ import eth from "@/assets/images/ethereum.png";
 import sol from "@/assets/images/solana.png";
 import { restoreFromPrivateKeys } from "@/backend/restoreprivatekey";
 import TokenDropdown from "@/components/coindropdn";
+import Toast, { ToastType } from "@/components/toast";
+import { KeysMeta, UserMeta } from "@/models/UserProfile";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Buffer } from "buffer";
-import { Link, useRouter } from "expo-router";
-import { CaretLeft, ClipboardText, QrCode } from "phosphor-react-native";
-import React, { useEffect } from "react";
+import { useRouter } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
+import { CaretLeft, ClipboardText, QrCode, User } from "phosphor-react-native";
+import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -31,24 +37,114 @@ const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpaci
 
 const ImportKey = () => {
   const router = useRouter();
-  
-  const phrase =
-    "mechanic cube approve used athlete lazy vague indicate culture between silk tiger";
+  const [keys, setkeys] = useState("");
+  const [selectedNetwork, setSelectedNetwork] = useState("BTC");
+  const [walletname, setwalletname] = useState("");
+  const [username, setUsername] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const keys = {
-    sol: "33MdL1YSSY2FHurvi3ig8DnakWbbkD4xW7feXMwyK2uNN1d7W9kgu8RdJZ23veXhFBkdfUbDHBPLxGvdfoPiQUXr",
-    eth: "292808aa5380065174c1540864f83a637e29a6f94b1c420318cc79eccbca8c5c",
-    btc: "L38UbtPa4SWaeJTZNQjCL9KKL53iuBVYfpR1UGHzu9qBWus8QAtH",
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<ToastType>("success");
+
+  const showToast = (message: string, type: ToastType = "success") => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
   };
-  
-  useEffect(() => {
-    (async () => {
-      // const walletData = await generatefromMnemonics(phrase);
-      const walletData = await restoreFromPrivateKeys(keys);
+  // const keys = {
+  //   sol: "33MdL1YSSY2FHurvi3ig8DnakWbbkD4xW7feXMwyK2uNN1d7W9kgu8RdJZ23veXhFBkdfUbDHBPLxGvdfoPiQUXr",
+  //   eth: "292808aa5380065174c1540864f83a637e29a6f94b1c420318cc79eccbca8c5c",
+  //   btc: "L38UbtPa4SWaeJTZNQjCL9KKL53iuBVYfpR1UGHzu9qBWus8QAtH",
+  // };
+
+  const handleImport = async () => {
+    if (!keys) {
+      showToast("Please enter your private key", "error");
+      return;
+    }
+    if (!walletname) {
+      showToast("Please give your wallet a name", "error");
+      return;
+    }
+    if (!username) {
+      showToast("Please create a username", "error");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const walletData = restoreFromPrivateKeys(
+         keys, selectedNetwork,
+      );
+
       console.log(walletData);
-      console.log("Length:", Buffer.from(keys.btc, "hex").length); // should be 32
-    })();
-  }, []);
+      if (walletData.BTC == "" && walletData.ETH == "" && walletData.SOL == "") {
+          throw new Error("Invalid Private Key");
+      }
+
+      const keysprofile : KeysMeta = {
+        id: "Keys",
+        mnemonics: "",
+        wallets: [
+          {
+            name: walletname,
+            privatekey: keys,
+            publickey: walletData[selectedNetwork],
+          }
+        ],
+        createdAt: Date.now(), 
+      }
+
+      const userprofile : UserMeta = {
+        id: "user",
+        name: username,
+        networth: 0,
+        wallets: [
+          { 
+            name: walletname,
+            totalBalance: 0,
+            growthInPerc: 0,
+            growthInUsd: 0,
+            coins: [
+              {
+                id: selectedNetwork,
+                name: selectedNetwork,
+                balance: 0,
+                usdBalance: 0,
+                growthInUsd: 0,
+                growthInPerc: 0,
+                address: walletData[selectedNetwork],
+                chain: selectedNetwork,
+                createdAt: Date.now(),
+              }
+            ],
+            createdAt: Date.now(),
+            lastActiveAt: Date.now()}
+        ]
+      }
+
+      // Safely store non-sensitive data
+      const savekeys = await SecureStore.setItemAsync("keys", JSON.stringify(keysprofile));
+      
+      const saveditem = await AsyncStorage.getItem("userProfile");
+      if (saveditem == null) {
+      await AsyncStorage.setItem("userProfile", JSON.stringify(userprofile)); 
+      }
+      
+      setIsLoading(false);
+      showToast("Wallet imported successfully!", "success");
+      setTimeout(() => {
+        router.replace("/dashboard");
+      }, 1500);
+
+    } catch (error) {
+      console.log(error);
+      showToast("Invalid Private Key. Please check and try again.", "error");
+      setIsLoading(false);
+    }
+  };
 
   const isIOS = Platform.OS === "ios";
   const { height } = Dimensions.get("window");
@@ -61,7 +157,13 @@ const ImportKey = () => {
 
   return (
     <View style={styles.container}>
-      
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <Toast 
+        visible={toastVisible}
+        message={toastMessage}
+        type={toastType}
+        onHide={() => setToastVisible(false)}
+      />
 
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
@@ -92,7 +194,10 @@ const ImportKey = () => {
             <Text style={styles.label}>Select Network</Text>
             <TokenDropdown
               data={dropdn}
-              onSelect={(item) => console.log("Selected:", item.title)}
+              onSelect={(item) => {
+                setSelectedNetwork(item.title);
+                console.log(item.title);
+              }}
             />
           </Animated.View>
 
@@ -108,6 +213,7 @@ const ImportKey = () => {
                 textAlignVertical="top"
                 style={styles.textArea}
                 placeholderTextColor="#6b7280"
+                onChangeText={(text) => setkeys(text)}
                 selectionColor="#ac71ff"
               />
               <TouchableOpacity activeOpacity={0.7} style={styles.pasteButton}>
@@ -127,24 +233,46 @@ const ImportKey = () => {
                 placeholder=" e.g. My Main Wallet"
                 style={styles.singleInput}
                 placeholderTextColor="#6b7280"
+                onChangeText={(text) => setwalletname(text)}
+                value={walletname}
                 selectionColor="#ac71ff"
               />
+            </View>
+          </Animated.View>
+
+          <Animated.View
+            entering={FadeInDown.duration(600).delay(200).springify()}
+            style={styles.inputSection}
+          >
+            <Text style={styles.label}>Create Username</Text>
+            <View style={styles.singleInputContainer}>
+              <TextInput
+                placeholder=" e.g. CryptoKing"
+                onChangeText={setUsername}
+                value={username}
+                style={styles.singleInput}
+                placeholderTextColor="#6b7280"
+                selectionColor="#ac71ff"
+              />
+              <User size={20} color="#6b7280" style={{ position: 'absolute', right: 16 }} />
             </View>
           </Animated.View>
         </ScrollView>
 
         <View style={styles.footer}>
-          <Link href={"/createwallet"} asChild>
-                      <Pressable>
-                        <Animated.View
-                          entering={FadeInUp.duration(600).delay(200).springify()}
-                          style={[styles.button, styles.primaryButton]}
-                        >
-                          <Text style={styles.primaryButtonText}>Import Wallet</Text>
-                        </Animated.View>
-                      </Pressable>
-                      
-                    </Link>
+          
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#ac71ff" />
+          ) : (
+            <Pressable onPress={handleImport}>
+              <Animated.View
+                entering={FadeInUp.duration(600).delay(200).springify()}
+                style={[styles.button, styles.primaryButton]}
+              >
+                <Text style={styles.primaryButtonText}>Import Wallet</Text>
+              </Animated.View>
+            </Pressable>
+          )}
         </View>
       </SafeAreaView>
     </View>

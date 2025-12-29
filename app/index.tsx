@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, router, useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useEffect } from "react";
 import {
   Dimensions,
@@ -31,17 +31,10 @@ const { width } = Dimensions.get('window');
 const SaturnIllustration = () => {
   const rotation = useSharedValue(0);
   const floatY = useSharedValue(0);
-  const checkasync = async () => {
-    const check = await AsyncStorage.getItem('userProfile');
-    if (check != null) { 
-      router.replace("/dashboard");
-    } else {
-      console.log("create")
-    }
-  }
+  
 
   useEffect(() => {
-    checkasync();
+    
     rotation.value = withRepeat(
       withTiming(360, { duration: 20000, easing: Easing.linear }),
       -1,
@@ -116,11 +109,8 @@ const SaturnIllustration = () => {
   );
 };
 
-export default function Index() {
-  const router = useRouter();
 
-  const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
-
+const IndexPage = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
@@ -196,6 +186,29 @@ export default function Index() {
     </View>
   );
 }
+export default function Index() {
+  const router = useRouter();
+
+  const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+
+  const checkasync = async () => {
+    const check = await AsyncStorage.getItem('userProfile');
+    if (check != null) { 
+      router.replace("/dashboard");
+    } else {
+      console.log("create")
+    }
+  }
+
+  useEffect(() => {
+    checkasync();
+  }, []);
+  return (
+    <IndexPage/>
+  );
+}
+
+
 
 const styles = StyleSheet.create({
   container: {

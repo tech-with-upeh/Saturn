@@ -1,3 +1,4 @@
+import { test } from "@/constants/appconstants";
 import * as tinysecp from "@bitcoinerlab/secp256k1";
 import { HDKey } from "@scure/bip32";
 import { Keypair } from "@solana/web3.js";
@@ -36,18 +37,19 @@ export async function generatefromMnemonics(
   const root = HDKey.fromMasterSeed(seed);
   console.log("Generating Mnemonic:", finalMnemonic);
   // BTC (Bech32 bc1) → m/84'/0'/0'/0/0
-  const btcNode = root.derive("m/84'/0'/0'/0/0");
+  const btcNode = test ? root.derive("m/84'/1'/0'/0/0") : root.derive("m/84'/0'/0'/0/0");
   const btcprivatekey = btcNode.privateKey;
-  const btcpublickey = btcNode.publicKey;
+  
 
   if (!btcprivatekey) throw new Error("Failed to derive BTC private key");
-  const btcKeypair = ECPair.fromPrivateKey(Buffer.from(btcprivatekey), { network: bitcoin.networks.bitcoin });
+  const btcKeypair = ECPair.fromPrivateKey(Buffer.from(btcprivatekey), { network: test ? bitcoin.networks.testnet : bitcoin.networks.bitcoin });
   const btcWif = btcKeypair.toWIF();
+  
   
   
   const { address: btcAddress, pubkeys } = bitcoin.payments.p2wpkh({
     pubkey: btcNode.publicKey!,
-    network: bitcoin.networks.bitcoin,
+    network: test ? bitcoin.networks.testnet : bitcoin.networks.bitcoin,
   });
 
   //  ETH → m/44'/60'/0'/0/0

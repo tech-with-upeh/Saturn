@@ -1,6 +1,7 @@
 import done from "@/assets/lotties/complete.json";
 import lott from "@/assets/lotties/load.json";
 import { Coins, generatefromMnemonics } from "@/backend/walletgen";
+import Toast, { ToastType } from "@/components/toast";
 import { KeysMeta, UserMeta } from "@/models/UserProfile";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
@@ -32,12 +33,28 @@ const CreateWallet =  () => {
   const [walletCreated, setWalletCreated] = useState(false);
   const [showloading, setLoading] = useState(false);
   const [username, setUsername] = useState("");
+  const [walletName, setWalletName] = useState("");
+
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<ToastType>("success");
+
+  const showToast = (message: string, type: ToastType = "success") => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
+  };
 
   useEffect(() => {
     setTimeout(() => setWalletCreated(true), 1500);
   }, []);
 
   const handleGoToDashboard = async () => {
+    if (!username) {
+      showToast("Please create a username", "error");
+      setLoading(false);
+      return;
+    }
     
     const data = await generatefromMnemonics();
 
@@ -67,6 +84,7 @@ const CreateWallet =  () => {
          id: c.chain,
          name: c.name,
          balance: 0,
+         usdBalance: 0,
          growthInPerc: 0,
          growthInUsd: 0,
          createdAt: Date.now(),
@@ -80,6 +98,7 @@ const CreateWallet =  () => {
 
      // Safely store non-sensitive data
      const savekeys = await SecureStore.setItemAsync("keys", JSON.stringify(keysprofile));
+     console.log("keys", keysprofile)
      
      const saveditem = await AsyncStorage.getItem("userProfile");
      if (saveditem == null) {
@@ -89,7 +108,10 @@ const CreateWallet =  () => {
     
     Keyboard.dismiss(); // Closes keyboard immediately
     setLoading(false);
-    router.replace("/dashboard"); // Use replace so they can't go back to setup
+    showToast("Wallet created successfully!", "success");
+    setTimeout(() => {
+      router.replace("/dashboard");
+    }, 1500);
   };
 
   const isButtonDisabled = username.trim().length < 3;
@@ -97,6 +119,12 @@ const CreateWallet =  () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <Toast 
+        visible={toastVisible}
+        message={toastMessage}
+        type={toastType}
+        onHide={() => setToastVisible(false)}
+      />
       
       <ImageBackground source={Logo} resizeMode="cover" style={StyleSheet.absoluteFill}>
         <LinearGradient
@@ -138,9 +166,12 @@ const CreateWallet =  () => {
                 </Text>
               </View>
 
-              {/* USERNAME INPUT */}
+              {/* USERNAME & WALLET NAME INPUTS */}
               {walletCreated && (
-                <Animated.View entering={FadeInDown} style={styles.inputWrapper}>
+                <Animated.View entering={FadeInDown} style={styles.inputsWrapper}>
+                  
+
+                  {/* Username Input */}
                   <View style={styles.inputContainer}>
                     <UserCircleIcon color={username.length >= 3 ? "#ac71ff" : "#4b5563"} size={22} weight="bold" />
                     <TextInput
@@ -171,15 +202,14 @@ const CreateWallet =  () => {
                       setLoading(true);
                       handleGoToDashboard();
                     }}
-                    disabled={isButtonDisabled}
                     activeOpacity={0.8}
                     style={[
                       styles.button, 
                       styles.primaryButton,
-                      isButtonDisabled && { opacity: 0.4 }
                     ]}
                   >
-                    {showloading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Go to Dashboard</Text>}                   </TouchableOpacity>
+                    {showloading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Go to Dashboard</Text>}
+                  </TouchableOpacity>
 
                   <TouchableOpacity style={[styles.button, styles.secondaryButton]}>
                     <Text style={styles.secondaryButtonText}>Back up keys</Text>
@@ -216,7 +246,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800', color: '#fff' },
   subtitle: { fontSize: 15, color: '#9ca3af', textAlign: 'center', marginTop: 8 },
   
-  inputWrapper: { width: '100%', marginBottom: 20 },
+  inputsWrapper: { width: '100%', marginBottom: 20, gap: 16 },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',

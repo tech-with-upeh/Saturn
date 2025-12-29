@@ -1,15 +1,17 @@
+import logo from "@/assets/images/logo.png";
 import { useThemeColors } from "@/constants/theme";
+import useStore from "@/models/StoreModel";
+import { QRCode } from '@masumdev/rn-qrcode';
 import { router } from "expo-router";
 import {
-    ArrowLeft,
-    CaretDown,
-    Check,
-    Copy,
-    Info,
-    QrCode,
-    ShareNetwork
+  ArrowLeft,
+  CaretDown,
+  Check,
+  Copy,
+  Info,
+  ShareNetwork
 } from "phosphor-react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, Modal, SafeAreaView, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 // Shared token list for consistency
@@ -20,8 +22,10 @@ const RECEIVABLE_TOKENS = [
 ];
 
 const ReceiveScreen = () => {
+  const userstore = useStore((state : any) => state.ActiveWallet);
+
   const theme = useThemeColors();
-  const [selectedToken, setSelectedToken] = useState(RECEIVABLE_TOKENS[0]);
+  const [selectedToken, setSelectedToken] = useState(userstore.coins[0]);
   const [modalVisible, setModalVisible] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -39,11 +43,18 @@ const ReceiveScreen = () => {
     }
   };
 
-  const selectToken = (token: typeof RECEIVABLE_TOKENS[0]) => {
+
+  const [activeWallet, setActiveWallet] = useState({});
+
+    const selectToken = (token: typeof userstore.coins[0]) => {
     setSelectedToken(token);
     setModalVisible(false);
   };
-
+  useEffect(() => {
+    console.log("userstore: " ,userstore.coins);
+    setActiveWallet(userstore);
+    
+  }, []);
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* HEADER */}
@@ -75,7 +86,20 @@ const ReceiveScreen = () => {
         <View style={[styles.qrContainer, { backgroundColor: theme.card }]}>
           <View style={styles.qrWrapper}>
              <View style={[styles.qrPlaceholder, { backgroundColor: '#fff' }]}>
-                <QrCode size={180} color="#000" weight="thin" />
+                <QRCode value={selectedToken.address} size={180} 
+              
+                logo={{
+                  source: logo,
+                  size: 500,
+                  backgroundColor: "transparent",
+                  
+                }}
+        color={theme.primary}
+        version={5}
+        includeBackground
+        variant="RAIN"
+        
+          />
              </View>
           </View>
           <Text style={[styles.qrHint, { color: theme.txtsec }]}>
@@ -86,7 +110,7 @@ const ReceiveScreen = () => {
         {/* ADDRESS DISPLAY */}
         <View style={[styles.addressBox, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.addressLabel, { color: theme.txtsec }]}>Your {selectedToken.symbol} Address</Text>
+            <Text style={[styles.addressLabel, { color: theme.txtsec }]}>Your {(selectedToken.id).toUpperCase()} Address</Text>
             <Text style={[styles.addressText, { color: theme.text }]} numberOfLines={1} ellipsizeMode="middle">
               {selectedToken.address}
             </Text>
@@ -103,13 +127,13 @@ const ReceiveScreen = () => {
         <View style={[styles.warningBox, { backgroundColor: '#EF444410' }]}>
           <Info color="#EF4444" size={18} weight="fill" />
           <Text style={[styles.warningText, { color: "#EF4444" }]}>
-            Only send <Text style={{ fontWeight: '800' }}>{selectedToken.symbol}</Text> to this address. Sending other assets may result in permanent loss.
+            Only send <Text style={{ fontWeight: '800' }}>{(selectedToken.id).toUpperCase()}</Text> to this address. Sending other assets may result in permanent loss.
           </Text>
         </View>
       </View>
 
       {/* ASSET SELECTION MODAL */}
-      <Modal visible={modalVisible} animationType="slide" transparent={true}>
+      <Modal visible={modalVisible} animationType="slide"  transparent={true}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
             <View style={styles.modalHeader}>
@@ -117,21 +141,21 @@ const ReceiveScreen = () => {
               <Text style={[styles.modalTitle, { color: theme.text }]}>Choose Asset</Text>
             </View>
             <FlatList
-              data={RECEIVABLE_TOKENS}
-              keyExtractor={(item) => item.symbol}
+              data={userstore.coins}
+              keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
                 <TouchableOpacity 
                   onPress={() => selectToken(item)}
-                  style={[styles.tokenItem, selectedToken.symbol === item.symbol && { backgroundColor: theme.background }]}
+                  style={[styles.tokenItem, selectedToken.id === item.id && { backgroundColor: theme.background }]}
                 >
-                  <View style={[styles.tokenIconLarge, { backgroundColor: item.color }]}>
-                    <Text style={{ color: '#fff', fontWeight: '800' }}>{item.symbol[0]}</Text>
+                  <View style={[styles.tokenIconLarge, { backgroundColor: theme.primary }]}>
+                    <Text style={{ color: '#fff', fontWeight: '800' }}>{(item.id[0]).toUpperCase()}</Text>
                   </View>
                   <View style={{ flex: 1, marginLeft: 15 }}>
-                    <Text style={[styles.tokenSymbol, { color: theme.text }]}>{item.symbol}</Text>
-                    <Text style={[styles.tokenFullName, { color: theme.txtsec }]}>{item.name}</Text>
+                    <Text style={[styles.tokenSymbol, { color: theme.text }]}>{(item.id).toUpperCase()}</Text>
+                    <Text style={[styles.tokenFullName, { color: theme.txtsec }]}>{item.name[0].toUpperCase() + item.name.slice(1)}</Text>
                   </View>
-                  {selectedToken.symbol === item.symbol && <Check color={theme.primary} size={20} weight="bold" />}
+                  {selectedToken.id === item.id && <Check color={theme.primary} size={20} weight="bold" />}
                 </TouchableOpacity>
               )}
             />
@@ -158,7 +182,7 @@ const ReceiveScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, height: 60 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, height: 60 },
   headerTitle: { fontSize: 18, fontWeight: '700' },
   backButton: { padding: 8 },
   content: { paddingHorizontal: 24, paddingTop: 20, alignItems: 'center' },

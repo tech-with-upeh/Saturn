@@ -1,16 +1,20 @@
 import { useThemeColors } from "@/constants/theme";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { ArrowDownLeft, ArrowLeft, ArrowUpRight, Star } from "phosphor-react-native";
 import React, { useState } from "react";
-import { Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { Defs, LinearGradient, Path, Stop, Svg } from "react-native-svg";
 
 const { width } = Dimensions.get("window");
 
 const CoinPage = () => {
+  const { height, width } = useWindowDimensions();
   const theme = useThemeColors();
   const [activeRange, setActiveRange] = useState("24H");
 
+   const params = useLocalSearchParams();
+
+   const { id, name, balance, growthInUsd, growthInPerc, address, chain, createdAt } = params;
   // Mock data for the line chart (values from 0 to 100)
   const chartData = [50, 40, 45, 30, 55, 70, 65, 80, 75, 90, 85, 100];
   
@@ -30,13 +34,13 @@ const CoinPage = () => {
   const ranges = ["1H", "24H", "1W", "1M", "1Y"];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background, paddingTop: 24 }]}>
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
           <ArrowLeft color={theme.text} size={24} weight="bold" />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Solana <Text style={{color: theme.txtsec, fontSize: 14}}>SOL</Text></Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>{name}</Text>
         <TouchableOpacity style={styles.iconBtn}>
           <Star color={theme.primary} size={24} weight="fill" />
         </TouchableOpacity>
@@ -105,9 +109,9 @@ const CoinPage = () => {
         {/* HOLDINGS CARD */}
         <View style={[styles.holdingsCard, { backgroundColor: theme.card }]}>
           <View style={styles.holdingsHeader}>
-             <Text style={[styles.holdingsLabel, { color: theme.txtsec }]}>Your Solana Balance</Text>
-             <Text style={[styles.holdingsValue, { color: theme.text }]}>12.50 SOL</Text>
-             <Text style={[styles.holdingsUsd, { color: theme.txtsec }]}>≈ $1,815.00</Text>
+             <Text style={[styles.holdingsLabel, { color: theme.txtsec }]}>Your {name} Balance</Text>
+             <Text style={[styles.holdingsValue, { color: theme.text }]}>{balance} {id}</Text>
+             <Text style={[styles.holdingsUsd, { color: theme.txtsec }]}>≈ ${balance}</Text>
           </View>
 
           <View style={styles.actionRow}>

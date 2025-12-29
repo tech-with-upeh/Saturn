@@ -29,7 +29,7 @@ export default function RootLayout() {
         }}
       />
       <Stack.Screen 
-        name="coinpage"
+        name="coinpage/[id]"
         options={{
           headerShown:false,
           animation: "slide_from_right"
@@ -57,6 +57,14 @@ export default function RootLayout() {
           animation: "fade",
         }}
         
+      />
+      <Stack.Screen
+        name="trending/[id]"
+        options={{
+          headerShown: false,
+          presentation: "card",
+          animation: "ios_from_left",
+        }}
       />
       <Stack.Screen
         name="qrscanner"

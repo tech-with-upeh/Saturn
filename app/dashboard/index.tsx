@@ -1,8 +1,10 @@
+import { getEthBalance } from "@/backend/balanceapi";
 import CoinTile from "@/components/cointile";
 import SkeletonLoader from "@/components/shimmer";
 import MemeCard from "@/components/trendingcard";
 import { COIN_ICONS } from "@/constants/appconstants";
 import { useIsDarkMode, useThemeColors } from "@/constants/theme";
+import useStore from "@/models/StoreModel";
 import { CoinMeta } from "@/models/UserProfile";
 import { fetchMemeCoins } from "@/services/trendingCoinService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -30,10 +32,7 @@ import {
   View
 } from "react-native";
 import {
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring
+  useSharedValue
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -47,43 +46,26 @@ const index = () => {
   const [permission, requestPermission] = useCameraPermissions();
   const [ActiveWallet, setActiveWallet] = useState<any>({});
 
-  const [expanded, setExpanded] = useState(false);
   const animation = useSharedValue(0);
 
-  const toggleStack = () => {
-    setExpanded(!expanded);
-    animation.value = withSpring(expanded ? 0 : 1, {
-      damping: 15,
-      stiffness: 90,
-    });
-  };
-
-  // Animated styles for the background cards
-  const getCardStyle = (index: number) => {
-    return useAnimatedStyle(() => {
-      const translateY = interpolate(animation.value, [0, 1], [index * -8, index * 105]);
-      const scale = interpolate(animation.value, [0, 1], [1 - index * 0.05, 1]);
-      const opacity = interpolate(animation.value, [0, 1], [0.4 / (index + 1), 1]);
-      const width = interpolate(animation.value, [0, 1], [100 - (index + 1) * 8, 100]);
-
-      return {
-        transform: [{ translateY }, { scale }],
-        opacity,
-        width: `${width}%`,
-        zIndex: -index,
-      };
-    });
-  };
-
+  const userstore = useStore((state : any) => state.setUserprofile);
+  const useActiveWallet = useStore((state : any) => state.setActiveWallet);
   useEffect(() => {
 
     const saveditem = async () => {
       const data  = await AsyncStorage.getItem("userProfile");
-      console.log(data)
-      setUserprofile(JSON.parse(data!));
-      setActiveWallet(JSON.parse(data!).wallets[0]);
+      if (data) {
+         const parsedData = JSON.parse(data);
+         setUserprofile(parsedData);
+         userstore(parsedData);
+         const wallet = parsedData.wallets[0];
+         setActiveWallet(wallet);
+         useActiveWallet(wallet);
+         return wallet;
+      }
+      return null;
     }
-    saveditem()
+    
     const load = async () => {
       const data = await fetchMemeCoins();
       if (data.length === 0) {
@@ -94,7 +76,20 @@ const index = () => {
     };
     load();
 
-
+    const balance = async () => {
+      const wallet = await saveditem();
+      if (wallet && wallet.coins && wallet.coins.length > 0) {
+        console.log(wallet.coins)
+        try {
+          const data = await getEthBalance(wallet.coins[1].address);
+          console.log("eth",data)
+        } catch (error) {
+          console.log(error)
+        }
+      }
+    }
+    balance();
+    
   }, []);
 
   const colorsche = useIsDarkMode();
@@ -657,10 +652,10 @@ const index = () => {
         {/* Wallet Label */}
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20, opacity: 0.9 }}>
           <View style={{ backgroundColor: "rgba(255,255,255,0.2)", padding: 8, borderRadius: 12, marginRight: 10 }}>
-            <Text style={{ color: "#fff" }}>{ActiveWallet.name?.charAt(0)}</Text> {/* Replace with WalletIcon */}
+            <Text style={{ color: "#fff" }}>{ActiveWallet.name?.charAt(0)}</Text>
           </View>
           <Text style={{ color: "#ffffff", fontSize: 15, fontWeight: "600" }}>{ActiveWallet.name}</Text>
-          <Text style={{ color: "#ffffff", marginLeft: 4, opacity: 0.8 }}>{">"}</Text> {/* Replace with CaretRightIcon */}
+          <Text style={{ color: "#ffffff", marginLeft: 4, opacity: 0.8 }}>{">"}</Text>
         </View>
 
         {/* Balance */}
@@ -669,14 +664,14 @@ const index = () => {
         </Text>
 
         {/* Growth Indicator */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+        {ActiveWallet.growthInPerc > 0 && <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <View style={{ backgroundColor: "#ff000033", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 6 }}>
             <Text style={{ color: "#fff", fontSize: 14, fontWeight: "800" }}>+{ActiveWallet.growthInPerc}%</Text>
           </View>
           <Text style={{ color: "rgba(255,255,255,0.9)", fontSize: 14, fontWeight: "600" }}>
             +$ {ActiveWallet.growthInUsd}
           </Text>
-        </View>
+        </View>}
       </LinearGradient>
     </View>
 
@@ -821,6 +816,20 @@ const index = () => {
                       name={item.name}
                       price={item.percent}
                       desc={item.description ? item.description : ""}
+                      onPress={() => {
+                        router.push({
+                          pathname: "/trending/[id]",
+                          params: {
+                            id: item.name,
+                            name: item.name,
+                            price: item.percent,
+                            desc: item.description,
+                            imageUrl: item.openGraph,
+                            chain: item.chainId,
+                            address: item.tokenAddress,
+                          },
+                        });
+                      }}
                     />
                   </View>
                 ))}
@@ -829,7 +838,7 @@ const index = () => {
         </View>
 
         {/* Assets Section */}
-        <View style={{ marginTop: 40, paddingHorizontal: 24, marginBottom: 40 }}>
+        <View style={{ marginTop: 40, paddingHorizontal: 24, marginBottom: 64 }}>
           <View
             style={{
               flexDirection: "row",
@@ -873,7 +882,8 @@ const index = () => {
             </TouchableOpacity>
           </View>
 
-          <View style={{ gap: 16, paddingBottom: 24 }}>
+          <View style={{ gap: 16, marginBottom: 32
+           }}>
             {ActiveWallet.coins?.map((item : CoinMeta, index : number) => (
               <CoinTile
                 key={index}
@@ -882,7 +892,30 @@ const index = () => {
                 usd={item.growthInUsd.toString()}
                 growth={item.growthInPerc.toString()}
                 chainId={item.id}
-                onPress={() => router.push("/coinpage")}
+                onPress={() => router.push({
+                  pathname: "/coinpage/[id]",
+
+                  // export type CoinMeta = {
+                  //   id: string;          // uuid
+                  //   name: string;       // "Main Wallet"
+                  //   balance: number;
+                  //   growthInUsd: number;
+                  //   growthInPerc: number;
+                  //   address: string;     // public address
+                  //   chain: string;
+                  //   createdAt: number;
+                  // };
+                  params: {
+                    id: item.id,
+                    name: item.name,
+                    balance: item.balance,
+                    growthInUsd: item.growthInUsd,
+                    growthInPerc: item.growthInPerc,
+                    address: item.address,
+                    chain: item.chain,
+                    createdAt: item.createdAt,
+                   },
+                })}
               />
             ))}
           </View>
