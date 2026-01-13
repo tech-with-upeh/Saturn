@@ -1,9 +1,25 @@
 
-// const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd");
-// const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd");
-
 import { etherscan, test } from "@/constants/appconstants";
 import { ethers } from "ethers";
+
+export const getPrices = async () => {
+    try {
+        const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,binancecoin&vs_currencies=usd");
+        if (!response.ok) {
+            throw new Error(`Coingecko API Error: ${response.status}`);
+        }
+        const data = await response.json();
+        return {
+            btc: data.bitcoin.usd,
+            eth: data.ethereum.usd,
+            sol: data.solana.usd,
+            bnb: data.binancecoin.usd
+        };
+    } catch (error) {
+        console.error("Error fetching prices:", error);
+        return { btc: 0, eth: 0, sol: 0, bnb: 0 };
+    }
+};
 
 
 
@@ -95,6 +111,38 @@ export const getSolBalance = async (address: string) => {
         }
         const data = await response.json();
         return data.result.value / 1e9;
+    } catch (error) {
+        console.error("Error fetching balance:", error);
+        console.log("Failed address:", address);
+        return null;
+    }
+};
+
+export const getBnbBalance = async (address: string) => {
+    if (!address) {
+        console.warn("getBnbBalance: No address provided");
+        return null;
+    }
+    
+    try {
+        const url = test ? "https://data-seed-prebsc-1-s1.binance.org:8545/" : "https://bsc-dataseed.binance.org/";
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: 1,
+                method: "eth_getBalance",
+                params: [address, "latest"],
+            }),
+        });
+        if (!response.ok) {
+            throw new Error(`BSC RPC Error: ${response.status}`);
+        }
+        const data = await response.json();
+        return parseFloat(ethers.formatEther(data.result));
     } catch (error) {
         console.error("Error fetching balance:", error);
         console.log("Failed address:", address);

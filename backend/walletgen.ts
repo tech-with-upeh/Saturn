@@ -6,6 +6,7 @@ import * as bip39 from "bip39";
 import * as bitcoin from "bitcoinjs-lib";
 import { Buffer } from "buffer";
 import { ECPairFactory } from "ecpair";
+import { derivePath } from "ed25519-hd-key";
 import { ethers } from "ethers";
 
 const ECPair = ECPairFactory(tinysecp);
@@ -22,6 +23,8 @@ export interface WalletResult {
   mnemonic: string;
   wallets: Coins[];
 }
+
+const mnemdanic = "7VUGgDLwSHgUF5cZ2Gvy2xKPUutqnSjJQjNSejbx3cEL"
 
 export function validateMnemonic(mnemonic: string): boolean {
   return bip39.validateMnemonic(mnemonic);
@@ -62,8 +65,10 @@ export async function generatefromMnemonics(
     ethers.HDNodeWallet.fromSeed(seed).derivePath("m/44'/60'/0'/0/1");
 
 
-  // SOL (random keypair)
-  const solKeypair = Keypair.generate();
+  // SOL (deterministic from seed)
+  const solDerivationPath = "m/44'/501'/0'/0'";
+  const solDerivedSeed = derivePath(solDerivationPath, seed.toString("hex")).key;
+  const solKeypair = Keypair.fromSeed(solDerivedSeed);
   const solAddress = solKeypair.publicKey.toBase58();
   const solPrivateKey = Buffer.from(solKeypair.secretKey).toString("hex");
 

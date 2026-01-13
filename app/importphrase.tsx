@@ -1,3 +1,4 @@
+import { getBnbBalance, getBtcBalance, getEthBalance, getPrices, getSolBalance } from "@/backend/balanceapi";
 import { Coins, generatefromMnemonics, validateMnemonic } from "@/backend/walletgen";
 import Toast, { ToastType } from "@/components/toast";
 import { KeysMeta, UserMeta } from "@/models/UserProfile";
@@ -66,33 +67,71 @@ const ImportPhrase = () => {
    }
     const data = await generatefromMnemonics(phrase);
     
-        const keysprofile : KeysMeta = {
-          id: "Keys",
-          mnemonics: data.mnemonic,
-          wallets: data.wallets.map((c: Coins, index) => ({
-            name: c.name,
-            privatekey: c.privateKey,
-            publickey: c.address
-          })),
-          createdAt: Date.now(),
-          
+    // Fetch prices and balances
+    const prices = await getPrices();
+    
+    const coinBalances = await Promise.all(data.wallets.map(async (c: Coins) => {
+      let balance = 0;
+      let price = 0;
+      
+      try {
+        if (c.chain === "btc") {
+          const btcData = await getBtcBalance(c.address);
+          balance = btcData ? btcData.btc : 0;
+          price = prices.btc;
+        } else if (c.chain === "eth") {
+          const ethBal = await getEthBalance(c.address);
+          balance = ethBal ? parseFloat(ethBal) : 0;
+          price = prices.eth;
+        } else if (c.chain === "sol") {
+          const solBal = await getSolBalance(c.address);
+          balance = solBal ? solBal : 0;
+          price = prices.sol;
+        } else if (c.chain === "BSC") {
+          const bnbBal = await getBnbBalance(c.address);
+          balance = bnbBal ? bnbBal : 0;
+          price = prices.bnb;
         }
-        
-         const userprofile : UserMeta = {
-           id: "user",
-           name: username,
-           networth: 0,
-           wallets: [
-             { 
+      } catch (err) {
+        console.error(`Error fetching balance for ${c.chain}:`, err);
+      }
+      
+      return {
+        ...c,
+        balance,
+        usdBalance: balance * price,
+        price
+      };
+    }));
+
+    const totalNetWorth = coinBalances.reduce((acc, curr) => acc + curr.usdBalance, 0);
+
+    const keysprofile : KeysMeta = {
+      id: "Keys",
+      mnemonics: data.mnemonic,
+      wallets: data.wallets.map((c: Coins, index) => ({
+        name: c.name,
+        privatekey: c.privateKey,
+        publickey: c.address
+      })),
+      createdAt: Date.now(),
+    }
+    
+     const userprofile : UserMeta = {
+       id: "user",
+       name: username,
+       networth: totalNetWorth,
+       wallets: [
+         { 
            name: walletName,
-           totalBalance: 0,
+           totalBalance: parseFloat(totalNetWorth.toFixed(2)),
            growthInPerc: 0,
            growthInUsd: 0,
-           coins: data.wallets.map((c: Coins, index) => ({
+           coins: coinBalances.map((c: any) => ({
              id: c.chain,
              name: c.name,
-             balance: 0,
-             usdBalance: 0,
+             balance: c.balance,
+             usdBalance: parseFloat(c.usdBalance.toFixed(2)),
              growthInPerc: 0,
              growthInUsd: 0,
              createdAt: Date.now(),
@@ -100,17 +139,18 @@ const ImportPhrase = () => {
              address: c.address
            })),
            createdAt: Date.now(),
-           lastActiveAt: Date.now()}
-           ]
+           lastActiveAt: Date.now()
          }
-    
-         // Safely store non-sensitive data
-         const savekeys = await SecureStore.setItemAsync("keys", JSON.stringify(keysprofile));
-         
-         const saveditem = await AsyncStorage.getItem("userProfile");
-         if (saveditem == null) {
-          await AsyncStorage.setItem("userProfile", JSON.stringify(userprofile)); 
-         }
+       ]
+     }
+
+     // Safely store non-sensitive data
+     await SecureStore.setItemAsync("keys", JSON.stringify(keysprofile));
+     
+     const saveditem = await AsyncStorage.getItem("userProfile");
+     if (saveditem == null) {
+       await AsyncStorage.setItem("userProfile", JSON.stringify(userprofile)); 
+     }
         
         setIsLoading(false);
         showToast("Wallet imported successfully!", "success");

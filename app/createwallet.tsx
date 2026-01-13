@@ -1,5 +1,6 @@
 import done from "@/assets/lotties/complete.json";
 import lott from "@/assets/lotties/load.json";
+import { getBnbBalance, getBtcBalance, getEthBalance, getPrices, getSolBalance } from "@/backend/balanceapi";
 import { Coins, generatefromMnemonics } from "@/backend/walletgen";
 import Toast, { ToastType } from "@/components/toast";
 import { KeysMeta, UserMeta } from "@/models/UserProfile";
@@ -55,8 +56,51 @@ const CreateWallet =  () => {
       setLoading(false);
       return;
     }
+
+    // HydMgNRv3uaYxPm5EN6HWKcgHcCiJsrrAgM8TBGUCuSN
+
+    // B1Uj95kdpYEGgvEFEATVLJ8TiQ7e6cqDgF3Rn7jHmFXC
     
     const data = await generatefromMnemonics();
+    
+    // Fetch prices and balances
+    const prices = await getPrices();
+    
+    const coinBalances = await Promise.all(data.wallets.map(async (c: Coins) => {
+      let balance = 0;
+      let price = 0;
+      
+      try {
+        if (c.chain === "btc") {
+          const btcData = await getBtcBalance(c.address);
+          balance = btcData ? btcData.btc : 0;
+          price = prices.btc;
+        } else if (c.chain === "eth") {
+          const ethBal = await getEthBalance(c.address);
+          balance = ethBal ? parseFloat(ethBal) : 0;
+          price = prices.eth;
+        } else if (c.chain === "sol") {
+          const solBal = await getSolBalance(c.address);
+          balance = solBal ? solBal : 0;
+          price = prices.sol;
+        } else if (c.chain === "BSC") {
+          const bnbBal = await getBnbBalance(c.address);
+          balance = bnbBal ? bnbBal : 0;
+          price = prices.bnb;
+        }
+      } catch (err) {
+        console.error(`Error fetching balance for ${c.chain}:`, err);
+      }
+      
+      return {
+        ...c,
+        balance,
+        usdBalance: balance * price,
+        price
+      };
+    }));
+
+    const totalNetWorth = coinBalances.reduce((acc, curr) => acc + curr.usdBalance, 0);
 
     const keysprofile : KeysMeta = {
       id: "Keys",
@@ -65,45 +109,43 @@ const CreateWallet =  () => {
         name: c.name,
         privatekey: c.privateKey,
         publickey: c.address
-      })),
-      createdAt: Date.now(),
-      
-    }
+       })),
+       createdAt: Date.now(),
+     }
     
      const userprofile : UserMeta = {
        id: "user",
        name: username,
-       networth: 0,
+       networth: totalNetWorth,
        wallets: [
          { 
-       name: "Main Wallet",
-       totalBalance: 0,
-       growthInPerc: 0,
-       growthInUsd: 0,
-       coins: data.wallets.map((c: Coins, index) => ({
-         id: c.chain,
-         name: c.name,
-         balance: 0,
-         usdBalance: 0,
-         growthInPerc: 0,
-         growthInUsd: 0,
-         createdAt: Date.now(),
-         chain: c.chain,
-         address: c.address
-       })),
-       createdAt: Date.now(),
-       lastActiveAt: Date.now()}
+           name: "Main Wallet",
+           totalBalance: parseFloat(totalNetWorth.toFixed(2)),
+           growthInPerc: 0,
+           growthInUsd: 0,
+           coins: coinBalances.map((c: any) => ({
+             id: c.chain,
+             name: c.name,
+             balance: c.balance,
+             usdBalance: parseFloat(c.usdBalance.toFixed(2)),
+             growthInPerc: 0,
+             growthInUsd: 0,
+             createdAt: Date.now(),
+             chain: c.chain,
+             address: c.address
+           })),
+           createdAt: Date.now(),
+           lastActiveAt: Date.now()
+         }
        ]
      }
 
      // Safely store non-sensitive data
-     const savekeys = await SecureStore.setItemAsync("keys", JSON.stringify(keysprofile));
-     console.log("keys", keysprofile)
+     await SecureStore.setItemAsync("keys", JSON.stringify(keysprofile));
      
      const saveditem = await AsyncStorage.getItem("userProfile");
      if (saveditem == null) {
-      await AsyncStorage.setItem("userProfile", JSON.stringify(userprofile));
-      
+       await AsyncStorage.setItem("userProfile", JSON.stringify(userprofile));
      }
     
     Keyboard.dismiss(); // Closes keyboard immediately
