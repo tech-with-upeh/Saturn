@@ -195,8 +195,6 @@ export default function Index() {
     const check = await AsyncStorage.getItem('userProfile');
     if (check != null) { 
       router.replace("/dashboard");
-    } else {
-      console.log("create")
     }
   }
 

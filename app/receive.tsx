@@ -51,7 +51,6 @@ const ReceiveScreen = () => {
     setModalVisible(false);
   };
   useEffect(() => {
-    console.log("userstore: " ,userstore.coins);
     setActiveWallet(userstore);
     
   }, []);

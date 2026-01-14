@@ -80,9 +80,8 @@ export const getEthBalance = async (address: string) => {
 
     return balanceInEth;
     } catch (error) {
-        console.error("Error fetching balance:", error);
         console.log("Failed address:", address);
-        return null;
+        return 0;
     }
 };
 
@@ -110,6 +109,7 @@ export const getSolBalance = async (address: string) => {
             throw new Error(`Solscan API Error: ${response.status}`);
         }
         const data = await response.json();
+        console.log("clg: ", data);
         return data.result.value / 1e9;
     } catch (error) {
         console.error("Error fetching balance:", error);

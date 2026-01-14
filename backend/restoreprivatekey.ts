@@ -1,3 +1,4 @@
+import { test } from "@/constants/appconstants";
 import * as ecc from "@bitcoinerlab/secp256k1";
 import { Keypair } from "@solana/web3.js";
 import * as bitcoin from "bitcoinjs-lib";
@@ -49,7 +50,7 @@ export function restoreFromPrivateKeys(key : string, network : string) : Restore
         throw new Error("Invalid BTC key format");
       }
     } catch (err) {
-      throw new Error("BTC restore failed:");
+      throw new Error("BTC restore failed:", err);
     }
       break;
       

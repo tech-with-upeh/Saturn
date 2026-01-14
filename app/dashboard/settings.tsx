@@ -15,19 +15,27 @@ import {
   Trash,
   User
 } from "phosphor-react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
+import useStore from "@/models/StoreModel";
 
 const SettingsScreen = () => {
+  const userstore = useStore((state : any) => state.userprofile);
   const theme = useThemeColors();
   const isDark = useIsDarkMode();
   const [notifications, setNotifications] = useState(true);
+  
+   useEffect(() => {
+    console.log(userstore);
+  }, []);
 
   const clearasyncstorage = async () => {
     await AsyncStorage.clear();
     await SecureStore.deleteItemAsync("keys");
     router.replace("/");
   }
+  
+  
 
   const SettingItem = ({ icon: Icon, title, value, onPress, color, isLast }: any) => (
     <TouchableOpacity 
@@ -58,7 +66,7 @@ const SettingsScreen = () => {
           <View style={styles.profileRow}>
             <View style={[styles.avatarContainer, { borderColor: theme.primary }]}>
               <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
-                <Text style={styles.avatarText}>JD</Text>
+                <Text style={styles.avatarText}>{userstore['name'][0]}{userstore['name'][1]}</Text>
               </View>
               {/* Pro Badge */}
               <View style={[styles.proBadge, { backgroundColor: theme.primary }]}>
@@ -67,7 +75,7 @@ const SettingsScreen = () => {
             </View>
 
             <View style={styles.profileInfo}>
-              <Text style={[styles.profileName, { color: theme.text }]}>John Doe</Text>
+              <Text style={[styles.profileName, { color: theme.text }]}>{userstore['name']}</Text>
               <TouchableOpacity style={styles.addressPill}>
                 <Text style={[styles.addressText, { color: theme.txtsec }]}>0x4b...32a9</Text>
                 <Copy color={theme.txtsec} size={12} weight="bold" />

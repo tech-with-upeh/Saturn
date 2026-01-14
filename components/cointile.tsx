@@ -5,6 +5,7 @@ import { Image, Text, TouchableOpacity, View } from "react-native";
 interface MemeCardProps {
   name: string;
   balance: string;
+  usdbalance: string;
   usd: string;
   growth: string;
   chainId: string;
@@ -14,6 +15,7 @@ interface MemeCardProps {
 const CoinTile: React.FC<MemeCardProps> = ({
   name,
   balance,
+  usdbalance,
   usd,
   growth,
   chainId,
@@ -100,7 +102,7 @@ const CoinTile: React.FC<MemeCardProps> = ({
             letterSpacing: -0.5,
           }}
         >
-          ${usd}
+          ${usdbalance}
         </Text>
         
         {/* Growth Pill */}

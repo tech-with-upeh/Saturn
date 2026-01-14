@@ -25,6 +25,7 @@ import {
 } from "phosphor-react-native";
 import React, { useEffect, useState } from "react";
 import {
+  RefreshControl,
   ScrollView,
   StatusBar,
   Text,
@@ -38,6 +39,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 
 const index = () => {
+  const [refreshing, setRefreshing] = React.useState(false)
   const [coins, setCoins] = useState<any[]>([]);
   const [userprofile, setUserprofile] = useState<any>({});
   const [loading, setLoading] = useState(true);
@@ -61,6 +63,7 @@ const index = () => {
          const wallet = parsedData.wallets[0];
          setActiveWallet(wallet);
          useActiveWallet(wallet);
+         console.log(wallet)
          return wallet;
       }
       return null;
@@ -79,17 +82,23 @@ const index = () => {
     const balance = async () => {
       const wallet = await saveditem();
       if (wallet && wallet.coins && wallet.coins.length > 0) {
-        console.log(wallet.coins)
         try {
           const data = await getEthBalance(wallet.coins[1].address);
-          console.log("eth",data)
         } catch (error) {
-          console.log(error)
+          console.log("error: ", error)
         }
       }
     }
     balance();
     
+  }, []);
+  
+  const onRefresh = React.useCallback(() => {
+    console.log("refreshing!!")
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
   }, []);
 
   const colorsche = useIsDarkMode();
@@ -590,7 +599,9 @@ const index = () => {
           backgroundColor: themeprovider.background,
         }}
         showsVerticalScrollIndicator={false}
-      >
+      refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
         {/* Wallet Balance Card */}
         <View style={{ paddingHorizontal: 24, alignItems: "center", marginTop: 20 }}>
 
@@ -890,25 +901,16 @@ const index = () => {
                 name={item.name}
                 balance={item.balance.toString()}
                 usd={item.growthInUsd.toString()}
+                usdbalance={item.usdBalance}
                 growth={item.growthInPerc.toString()}
                 chainId={item.id}
                 onPress={() => router.push({
                   pathname: "/coinpage/[id]",
-
-                  // export type CoinMeta = {
-                  //   id: string;          // uuid
-                  //   name: string;       // "Main Wallet"
-                  //   balance: number;
-                  //   growthInUsd: number;
-                  //   growthInPerc: number;
-                  //   address: string;     // public address
-                  //   chain: string;
-                  //   createdAt: number;
-                  // };
                   params: {
                     id: item.id,
                     name: item.name,
                     balance: item.balance,
+                    usdbalance: item.usdBalance,
                     growthInUsd: item.growthInUsd,
                     growthInPerc: item.growthInPerc,
                     address: item.address,
